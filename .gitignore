@@ -1,0 +1,12 @@
+# Ignore MAC file systems
+.DS_store
+
+# Ignore folder
+work
+
+# Ignore files related to API keys
+.env
+
+# Ignore virtual environment files
+.venv
+
