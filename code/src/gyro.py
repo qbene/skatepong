@@ -27,7 +27,9 @@ class Gyro(mpu6050):
     def get_gyro(mpu):
         gyro_data = mpu.get_gyro_data()
         gyro_y = round(gyro_data['y'],2)
-        if  gyro_y < -50:
+        if  gyro_y < -200:
+            vy = -30
+        elif  (gyro_y >= -200 and gyro_y < -50):
             vy = -20
         elif (gyro_y >= -50 and gyro_y < -10): 
             vy = -10    
@@ -35,14 +37,19 @@ class Gyro(mpu6050):
             vy = 0
         elif (gyro_y >= 10 and gyro_y < 50):
             vy = 10
-        elif gyro_y >= 50:
+        elif (gyro_y >= 50 and gyro_y < 200):
             vy = 20
+        elif gyro_y >= 200:
+            vy = 30
         else:
             vy = 5
         print("Gyro Y : MPU1 => ", gyro_y, "    vy = ", vy)
         print("-------------------------------")
         return vy
-
+    
+    def calibrate():
+        pass
+    
 def main():
     gyro_1=Gyro(Gyro.I2C_ADDRESS_1, 'y', mpu6050.GYRO_RANGE_500DEG)
     gyro_2=Gyro(Gyro.I2C_ADDRESS_2, 'y', mpu6050.GYRO_RANGE_500DEG)
