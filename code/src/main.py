@@ -30,6 +30,7 @@ pygame.init()
 WINNING_SCORE = 2 # Number of goals to win the game
 BALL_ANGLE_MAX = 60 # Max angle after paddle collision (degrees) [30-75]
 # Delays
+DELAY_INACT_PLAYER = 5 # Delay after which a player is considered inactive (s)
 DELAY_COUNTDOWN = 3 # Countdown initial time before starting the game (s)
 DELAY_GAME_END = 5 # Delay after game ends (s)
 # Technical parameters
@@ -55,6 +56,7 @@ SCORE_Y_OFFSET_RATIO = 0.02 # Ratio to screen height (to set score vertically)
 FONT_NAME = "comicsans" # Font used for texts
 FONT_RATIO_0_05 = 0.05 # Ratio to screen height
 FONT_RATIO_0_1 = 0.1 # Ratio to screen height
+FONT_RATIO_0_15 = 0.15 # Ratio to screen height
 FONT_RATIO_0_2 = 0.2 # Ratio to screen height
 
 #------------------------------------------------------------------------------
@@ -127,6 +129,9 @@ class Ball:
         self.vy = self.original_vy
 
 def create_window(DEV_MODE):
+    """
+    Initializes game window, and adjusts size to display resolution.
+    """
     #disp_w, disp_h = pygame.display.get_desktop_sizes()
     disp_w = pygame.display.Info().current_w # Display width (in pixels)
     disp_h = pygame.display.Info().current_h # Display height (in pixels)
@@ -138,9 +143,10 @@ def create_window(DEV_MODE):
     win_w , win_h = pygame.display.get_surface().get_size()
     return WIN, win_w, win_h # Capital letters for WIN to identify main window
 
-def draw_text_centered(win, font_name, font_size, text, center_x, center_y, color, bg_color = None):
-    """ Function to draw a text on a surface
-
+def draw_text(win, font_name, font_size, text, center_x, center_y, color, bg_color = None):
+    """
+    Draws text on a surface, text center serving as position reference.
+    
     bg_color = text background color
     """
     font = pygame.font.SysFont(font_name, font_size)
@@ -149,22 +155,33 @@ def draw_text_centered(win, font_name, font_size, text, center_x, center_y, colo
     text_rect.center = (center_x, center_y)
     win.blit(text_surf, text_rect)
 
-def draw_elements(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = False, draw_ball = False, draw_scores = False):
+def draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = False, draw_ball = False, draw_scores = False):
+    """
+    Draws on a surface the desired game elements (pads / ball / scores)
+    
+    Note : Each scene of the game do not require every single game object 
+    """
     if draw_pads == True:
         l_pad.draw(win)
         r_pad.draw(win)
     if draw_ball == True:
         ball.draw(win)
     if draw_scores == True:
-        draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(l_score), win_w // 4, int(FONT_RATIO_0_1 * win_h), WHITE)
-        draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(r_score), (win_w * 3) // 4, int(FONT_RATIO_0_1 * win_h), WHITE) 
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(l_score), win_w // 4, int(FONT_RATIO_0_1 * win_h), WHITE)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(r_score), (win_w * 3) // 4, int(FONT_RATIO_0_1 * win_h), WHITE) 
  
 def welcome(win, win_w, win_h):
+    """
+    Displays a welcome screen for a certain duration at program start.
+    """
     start_time = time.time()
+    
+    # Managing display:
     win.fill(BLACK)
     pygame.draw.circle(win, WHITE, (win_w//2, win_h//2), WELCOME_RADIUS_RATIO * win_h)
-    draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), "SKATEPONG", win_w // 2, win_h // 2, BLACK)
+    draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), "SKATEPONG", win_w // 2, win_h // 2, BLACK)
     pygame.display.update()
+    
     current_time = time.time()
     while current_time - start_time < 3:
         # Closing game window if red cross clicked or ESCAPE pressed:
@@ -175,8 +192,12 @@ def welcome(win, win_w, win_h):
     game_status = SCENE_WAITING_PLAYERS
     return game_status
 
-def waiting_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score):
- 
+def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score):
+    """
+    Enters 'standby' state before detection of actives players on each skateboard.
+    
+    Note : paddles active.
+    """
     moving_time = time.time()
     current_time = time.time()
     left_player_ready = False
@@ -196,11 +217,11 @@ def waiting_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_sco
         elif ((left_player_ready == True) and (right_player_ready == False)):
             message = "RIGHT PLAYER MISSING"
         
+        # Managing display:
         win.fill(BLACK)
-        draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), message, win_w // 2, win_h // 4, WHITE)
-        draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_05 * win_h), "MOVE SKATES TO START", win_w // 2, (win_h * 3) // 4, WHITE)
-        draw_elements(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = False)
-
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), message, win_w // 2, win_h // 4, WHITE)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_05 * win_h), "MOVE SKATES TO START", win_w // 2, (win_h * 3) // 4, WHITE)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = False)
         pygame.display.update()
         
         vy_l_pad = l_pad.move(win_h)
@@ -214,7 +235,7 @@ def waiting_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_sco
 
         current_time = time.time()
 
-        if current_time - moving_time > 5:
+        if current_time - moving_time > DELAY_INACT_PLAYER:
             left_player_ready = 0
             right_player_ready = 0
 
@@ -222,6 +243,11 @@ def waiting_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_sco
     return game_status
 
 def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score):
+    """
+    Starts a countdown before the game actually begins.
+
+    Note : paddles active.
+    """
     start_time = time.time()
     current_time = time.time()
     
@@ -235,10 +261,11 @@ def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_
 
         vy_l_pad = l_pad.move(win_h)
         vy_r_pad = r_pad.move(win_h)
-       
+
+        # Managing display:
         win.fill(BLACK)
-        draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_2 * win_h), str(time_before_start), win_w // 2, win_h // 4, WHITE)
-        draw_elements(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = False)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_2 * win_h), str(time_before_start), win_w // 2, win_h // 4, WHITE)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = False)
         pygame.display.update()
 
         current_time = time.time()
@@ -246,12 +273,17 @@ def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_
     game_status = SCENE_GAME_ONGOING
     return game_status
 
-def game_ongoing(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, win_text, won, l_gyro, r_gyro):
+def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro):
+    """
+    Controls the game itself.
+    
+    1 point each time a player shoots the ball inside the oponent's zone.
+    """
     clock = pygame.time.Clock()
     run = True    
     l_score = 0
     r_score = 0
-    while (run and l_score < WINNING_SCORE and r_score < WINNING_SCORE):
+    while (l_score < WINNING_SCORE and r_score < WINNING_SCORE):
 
         clock.tick(FPS)
         # Closing game window if red cross clicked or ESCAPE pressed:
@@ -261,44 +293,38 @@ def game_ongoing(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LI
         vy_l_pad = l_pad.move(win_h)
         vy_r_pad = r_pad.move(win_h)
 
-        #draw_game(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, win_text, won)
         ball.move()
 
         handle_collision(ball, l_pad, r_pad, win_w, win_h)
 
-        l_score, r_score, won, win_text = detect_goal(ball, l_score, r_score, won, win_text, win_w, win_h)
-        
-        win.fill(BLACK)
-        draw_elements(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = True)
+        l_score, r_score = detect_goal(ball, l_score, r_score, win_w)
 
+        # Managing display:
+        win.fill(BLACK)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = True)
         pygame.display.update()   
-        """
-        if won:
-            draw_game(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, win_text, won)
-            pygame.time.delay(DELAY_GAME_END)
-            l_pad, r_pad, ball, mid_line_h, l_score, r_score, won, win_text = initialize_game(win_w, win_h)
+
+        if (l_score >= WINNING_SCORE or r_score >= WINNING_SCORE):
             game_status = SCENE_GAME_END
-        """
-        if won:
-            #l_pad, r_pad, ball, mid_line_h, l_score, r_score, won, win_text = initialize_game(win_w, win_h)
-            game_status = SCENE_GAME_END
+            break
          
     return game_status, l_score, r_score
 
-def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h_ratio, win_text, won, l_gyro, r_gyro):
-
+def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h_ratio, l_gyro, r_gyro):
+    """
+    Announces the winner, with final score.
+    
+    Note : paddles active.
+    """
     start_time = time.time()
     current_time = time.time()
     ball.vx = 0
     ball.vy = 0
     
-    #font = pygame.font.SysFont(FONT_NAME, round(FONT_RATIO_0_1*win_h))
     if (l_score == WINNING_SCORE):
         message = "LEFT PLAYER WON"
     else:
         message = "RIGHT PLAYER WON"
-    
-    #text = font.render(message, 1, WHITE)
     
     while current_time - start_time < DELAY_GAME_END:
 
@@ -309,20 +335,10 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
         vy_l_pad = l_pad.move(win_h)
         vy_r_pad = r_pad.move(win_h)
 
+        # Managing display:
         win.fill(BLACK)
-        draw_elements(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = False, draw_scores = True)
-        #win.blit(text, (win_w//2 - text.get_width() // 2, win_h // 4 - text.get_height() // 2))
-        
-        draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_2 * win_h), message, win_w // 2, win_h // 2, WHITE)
-       
-        """
-        draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(l_score), win_w // 4, int(FONT_RATIO_0_1 * win_h), WHITE)
-        draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(r_score), (win_w * 3) // 4, int(FONT_RATIO_0_1 * win_h), WHITE) 
-
-        ball.draw(win)
-        l_pad.draw(win)
-        r_pad.draw(win)
-        """
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = False, draw_scores = True)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_15 * win_h), message, win_w // 2, win_h // 2, WHITE)
         pygame.display.update()
 
         current_time = time.time()
@@ -331,34 +347,19 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
     return game_status        
 
 def compute_elements_sizes(win_w, win_h):
-    """Compute elements sizes/speeds based on display resolution"""
+    """
+    Computes game elements sizes/speeds based on display resolution.
+    """
     pad_w = int(win_w*PAD_WIDTH_RATIO)
     pad_h = int(win_h*PAD_HEIGHT_RATIO)
     ball_r = min(int(win_w*BALL_RADIUS_RATIO), int(win_h*BALL_RADIUS_RATIO))
     ball_vx = int(BALL_V_RATIO*win_w)
     return pad_w, pad_h, ball_r, ball_vx
 
-def draw_game(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h_ratio, win_text, won):
-    
-    # Scores
-    win.fill(BLACK)
-    draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(l_score), win_w // 4, int(FONT_RATIO_0_1 * win_h), WHITE)
-    draw_text_centered(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(r_score), (win_w * 3) // 4, int(FONT_RATIO_0_1 * win_h), WHITE) 
-    # Paddles
-    l_pad.draw(win)
-    r_pad.draw(win)
-    if won == False:
-        # Ball
-        ball.draw(win)
-        # Middle line
-        draw_mid_line(win, win_w,win_h,mid_line_h_ratio)
-    else:
-        text = SCORE_FONT.render(win_text, 1, WHITE)
-        win.blit(text, (win_w//2 - text.get_width() // 2, win_h//2 - text.get_height()//2))
-
-    pygame.display.update()
-
 def draw_mid_line(win, win_width,win_height,mid_line_height_ratio):
+    """
+    Draws dashed line in the middle of the screen.
+    """
     line_element_height = round(win_height*mid_line_height_ratio)
     nb_iterations = round(1/mid_line_height_ratio)-1
     for i in range(0, nb_iterations):
@@ -367,6 +368,13 @@ def draw_mid_line(win, win_width,win_height,mid_line_height_ratio):
         pygame.draw.rect(win, WHITE, (win_width//2 - 5, i*line_element_height+line_element_height//2, 10, line_element_height))
 
 def handle_collision(ball, l_pad,r_pad, win_w, win_h):
+    """
+    Handles ball collision with paddles and top/bottom walls.
+    
+    - Calculates ball horizontal and vertical velocities.
+    - Calculates ball angle after collision with paddle depending
+    ...on the collision point.
+    """
     # Collision with top wall or bottom wall:
     if ((ball.y + ball.r >= win_h) or (ball.y - ball.r <= 0)):
         ball.vy *= -1
@@ -405,7 +413,10 @@ def handle_collision(ball, l_pad,r_pad, win_w, win_h):
                     ball.vy = vy
                     ball.vx = -vx
 
-def detect_goal(ball, l_score, r_score, won, win_text, win_w, win_h):
+def detect_goal(ball, l_score, r_score, win_w):
+    """
+    Handles when goals are scored, and updates scores.
+    """
     if ball.x < 0:
         r_score += 1
         vx_direction_after_goal = 1
@@ -415,29 +426,23 @@ def detect_goal(ball, l_score, r_score, won, win_text, win_w, win_h):
     if ball.x < 0 or ball.x > win_w:
         ball.reset()
         ball.vx *= vx_direction_after_goal
-
-    if l_score >= WINNING_SCORE:
-        won = True
-        win_text = "Left Player Won!"
-    elif r_score >= WINNING_SCORE:
-        won = True
-        win_text = "Right Player Won!"
     
-    return l_score, r_score, won, win_text
+    return l_score, r_score
 
 def check_exit_game(keys):
-    #run = True
+    """
+    Exits the game when user clicks on the red cross or presses ESCAPE. 
+    """
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
-            #run = False
-            #break
     if keys[pygame.K_ESCAPE]:
         sys.exit()
-        #run = False
-    #return run
 
 def initialize_game(win_w, win_h, l_gyro, r_gyro):
+    """
+    Creates game objects at program start.
+    """
     # Creating game objects:
     # - Both paddles are centered vertically
     # - The ball is created in the center of the display, with a horizontal velovity
@@ -452,12 +457,9 @@ def initialize_game(win_w, win_h, l_gyro, r_gyro):
     # Initializing game variables:
     l_score = 0
     r_score = 0
-    won = False
-    win_text = ""
-    return l_pad, r_pad, ball, mid_line_h, l_score, r_score, won, win_text, ball_vx
+    return l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx
 
 def main():
-    run = True
     #clock = pygame.time.Clock()
     # Creating game window:
     WIN, win_w, win_h = create_window(DEV_MODE)
@@ -465,40 +467,22 @@ def main():
     l_gyro = Gyro(Gyro.I2C_ADDRESS_1, 'y', GYRO_SENSITIVITY)
     r_gyro = Gyro(Gyro.I2C_ADDRESS_2, 'y', GYRO_SENSITIVITY)
     # Initializing game:
-    #game_status = 0
     game_status = 0
-    l_pad, r_pad, ball, mid_line_h, l_score, r_score, won, win_text, ball_vx = initialize_game(win_w, win_h, l_gyro, r_gyro)
+    l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx = initialize_game(win_w, win_h, l_gyro, r_gyro)
 
-    while run == True:
+    while True:
 
         if game_status == SCENE_WELCOME:
             game_status = welcome(WIN, win_w, win_h)
         elif game_status == SCENE_WAITING_PLAYERS: # Waiting for players
-            game_status = waiting_players(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score)
+            game_status = wait_players(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score)
         elif game_status == SCENE_COUNTDOWN: # Countdown before start
             game_status = countdown(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score)
         elif game_status == SCENE_GAME_ONGOING: # Game ongoing
             ball.vx = ball_vx
-            game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, win_text, won, l_gyro, r_gyro)
+            game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro)
         elif game_status == SCENE_GAME_END: # Game finished
-            game_status = game_end(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, win_text, won, l_gyro, r_gyro)
+            game_status = game_end(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro)
             
-            
-        """ Only valid with Python > 3.10
-        match game_status:
-            case SCENE_WELCOME: # Welcome screen with logo
-                welcome(WIN, win_w, win_h)
-            case SCENE_WAITING_PLAYERS: # Waiting for players
-                waiting_players(win, win_w, win_h)
-            case SCENE_COUNTDOWN: # Countdown before start
-                pass
-            case SCENE_GAME_ONGOING: # Game ongoing
-                game_ongoing(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, win_text, won)
-            case SCENE_GAME_END: # Game finished
-                pass
-        """
-        #run = False
-    pygame.quit()
-
 if __name__ == '__main__':
     main()
