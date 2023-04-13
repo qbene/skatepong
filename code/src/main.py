@@ -7,7 +7,7 @@
 import pygame
 import math
 from mpu6050 import mpu6050
-from gyro import Gyro
+from gyro import Gyro_one_axis
 import time
 
 #------------------------------------------------------------------------------
@@ -33,6 +33,8 @@ BALL_ANGLE_MAX = 60 # Max angle after paddle collision (degrees) [30-75]
 DELAY_INACT_PLAYER = 5 # Delay after which a player is considered inactive (s)
 DELAY_COUNTDOWN = 3 # Countdown initial time before starting the game (s)
 DELAY_GAME_END = 5 # Delay after game ends (s)
+DELAY_BEF_PAD_CALIB = 10 # Delay before paddles calibration starts (s)
+DELAY_AFT_PAD_CALIB = 10 # Delay after paddles calibration is done (s)
 # Technical parameters
 FPS = 60 # Max number of frames per second
 GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_500DEG
@@ -69,6 +71,7 @@ SCENE_WAITING_PLAYERS = 1
 SCENE_COUNTDOWN = 2
 SCENE_GAME_ONGOING = 3
 SCENE_GAME_END = 4
+SCENE_CALIBRATION = 5
 
 # Colors
 WHITE = (255, 255, 255)
@@ -91,9 +94,31 @@ class Paddle:
 
     def draw(self, win):
         pygame.draw.rect(win, self.COLOR, (self.x, self.y, self.w, self.h))
-        
+
+    def compute_pad_velocity(self):
+        gyro_raw = self.gyro.get_data()
+        gyro_calib = gyro_raw - self.gyro.offset
+        if gyro_calib < -200:
+            vy = -30
+        elif  (gyro_calib >= -200 and gyro_calib < -50):
+            vy = -20
+        elif (gyro_calib >= -50 and gyro_calib < -10): 
+            vy = -10    
+        elif (gyro_calib >= -10 and gyro_calib < 10):
+            vy = 0
+        elif (gyro_calib >= 10 and gyro_calib < 50):
+            vy = 10
+        elif (gyro_calib >= 50 and gyro_calib < 200):
+            vy = 20
+        elif gyro_calib >= 200:
+            vy = 30
+        else:
+            vy = 5
+        print("Gyro (" + self.gyro.axis + " axis) => Raw data :", str(round(gyro_raw,2)), "/ Calibrated data :", str(round(gyro_calib,2)))
+        return vy
+
     def move(self, win_h):
-        vy_pad = self.gyro.get_gyro()        
+        vy_pad = self.compute_pad_velocity()        
         if self.y + vy_pad < 0:
             self.y = 0
         elif self.y + self.h + vy_pad > win_h:
@@ -101,7 +126,10 @@ class Paddle:
         else:
             self.y += vy_pad
         return vy_pad
-
+    
+    def move_to_center(self, win_h):
+        self.y = (win_h - self.h) // 2
+    
 class Ball:
     COLOR = WHITE
 
@@ -169,8 +197,16 @@ def draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, d
     if draw_scores == True:
         draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(l_score), win_w // 4, int(FONT_RATIO_0_1 * win_h), WHITE)
         draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(r_score), (win_w * 3) // 4, int(FONT_RATIO_0_1 * win_h), WHITE) 
- 
-def welcome(win, win_w, win_h):
+
+def check_for_pads_calib(keys, game_status):
+    """
+    Determines if user has requested paddles calibration.
+    """
+    if keys[pygame.K_p]:
+        game_status = SCENE_CALIBRATION
+    return game_status
+
+def welcome(win, win_w, win_h, game_status):
     """
     Displays a welcome screen for a certain duration at program start.
     """
@@ -189,10 +225,12 @@ def welcome(win, win_w, win_h):
         check_exit_game(keys)
         # Updating current time
         current_time = time.time()
+        
     game_status = SCENE_WAITING_PLAYERS
     return game_status
 
-def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score):
+#def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, recent_calibration):
+def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status):
     """
     Enters 'standby' state before detection of actives players on each skateboard.
     
@@ -209,6 +247,11 @@ def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score,
         # Closing game window if red cross clicked or ESCAPE pressed:        
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
+        
+        # Going to paddles calibration scene upon user request:
+        game_status = check_for_pads_calib(keys, game_status)
+        if game_status == SCENE_CALIBRATION:
+            return game_status
 
         if ((left_player_ready == False) and (right_player_ready == False)):
             message = "WAITING FOR PLAYERS"
@@ -273,7 +316,7 @@ def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_
     game_status = SCENE_GAME_ONGOING
     return game_status
 
-def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro):
+def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, game_status):
     """
     Controls the game itself.
     
@@ -289,6 +332,11 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
+        
+        # Going to paddles calibration scene upon user request:
+        game_status = check_for_pads_calib(keys, game_status)
+        if game_status == SCENE_CALIBRATION:
+            return game_status, l_score, r_score
 
         vy_l_pad = l_pad.move(win_h)
         vy_r_pad = r_pad.move(win_h)
@@ -345,6 +393,82 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
     
     game_status = SCENE_WAITING_PLAYERS 
     return game_status        
+
+def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score):
+    """
+    Handles the paddles calibration.
+    
+    - A first screen indicates that calibration will take place after countdown
+    => Indic
+    - A second screen allows user to test the new calibration for a given time
+    - Then, going back to the scene "waiting for players".
+    """
+    start_time = time.time()
+    current_time = time.time()
+    
+    # Announcing that calibration is about to take place
+    while current_time - start_time < DELAY_BEF_PAD_CALIB:
+
+        # Closing game window if red cross clicked or ESCAPE pressed:
+        keys = pygame.key.get_pressed()
+        check_exit_game(keys)
+
+        time_before_start = DELAY_BEF_PAD_CALIB - int(current_time - start_time)
+       
+        vy_l_pad = l_pad.move(win_h)
+        vy_r_pad = r_pad.move(win_h)
+        
+        # Managing display:
+        win.fill(BLACK)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), "CALIBRATION IS ABOUT TO START", win_w // 2, win_h // 4, WHITE)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_05 * win_h), "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS", win_w // 2, (win_h * 3) // 4, WHITE)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_2 * win_h), str(time_before_start), win_w // 2, win_h // 2, WHITE)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = False, draw_scores = False)
+        pygame.display.update()
+        
+        current_time = time.time()
+    
+    # Managing display:
+    win.fill(BLACK)
+    draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), "CALIBRATION ONGOING...", win_w // 2, win_h // 4, WHITE)
+    draw_text(win, FONT_NAME, int(FONT_RATIO_0_05 * win_h), "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS", win_w // 2, (win_h * 3) // 4, WHITE)
+    draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = False, draw_scores = False)
+    pygame.display.update()
+    # Gyroscope offset measurement:
+    l_gyro.offset = l_gyro.measure_gyro_offset()
+    r_gyro.offset = r_gyro.measure_gyro_offset()    
+    # Paddles calibration:
+    l_pad.move_to_center(win_h)
+    r_pad.move_to_center(win_h)
+
+
+    # Annoucing that calibration has been performed :
+    start_time = time.time()
+    current_time = time.time()
+    while current_time - start_time < DELAY_AFT_PAD_CALIB:
+        
+        # Closing game window if red cross clicked or ESCAPE pressed:
+        keys = pygame.key.get_pressed()
+        check_exit_game(keys)
+
+        time_before_start = DELAY_AFT_PAD_CALIB - int(current_time - start_time)
+
+        vy_l_pad = l_pad.move(win_h)
+        vy_r_pad = r_pad.move(win_h)
+        
+        # Managing display:
+        win.fill(BLACK)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), "CALIBRATION DONE", win_w // 2, win_h // 4, WHITE)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_05 * win_h), "MOVE SKATES TO TEST CALIBRATION", win_w // 2, (win_h * 3) // 4, WHITE)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_2 * win_h), str(time_before_start), win_w // 2, win_h // 2, WHITE)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = False, draw_scores = False)
+        pygame.display.update()
+        
+        current_time = time.time()
+    
+    game_status = SCENE_WAITING_PLAYERS
+
+    return game_status
 
 def compute_elements_sizes(win_w, win_h):
     """
@@ -460,29 +584,47 @@ def initialize_game(win_w, win_h, l_gyro, r_gyro):
     return l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx
 
 def main():
+    """
+    Skatepong is a pong game for 2 players, with real skateboards as actuators.
+    
+    - Objective : 1 point each time a player shoots the ball inside the oponent's zone.
+    - End : Game stops after a given number of points has been reached.
+    - The 2 paddles are controlled independently based on the movements detected
+    by a gyroscope mounted under each skateboard.
+    - Scenes description :
+        SCENE_WELCOME : Splash screen at game start.
+        SCENE_WAITING_PLAYERS : Waiting for motion on both skates.
+        SCENE_COUNTDOWN : Countdown before the game actually starts.
+        SCENE_GAME_ONGOING : Game itself.
+        SCENE_GAME_END : Announces the winner, with final score.
+        SCENE_CALIBRATION : Allows to calibrate paddles when requested by user.
+    """
     #clock = pygame.time.Clock()
     # Creating game window:
     WIN, win_w, win_h = create_window(DEV_MODE)
     # Creating the 2 gyroscopes objects:
-    l_gyro = Gyro(Gyro.I2C_ADDRESS_1, 'y', GYRO_SENSITIVITY)
-    r_gyro = Gyro(Gyro.I2C_ADDRESS_2, 'y', GYRO_SENSITIVITY)
+    l_gyro = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', GYRO_SENSITIVITY)
+    r_gyro = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', GYRO_SENSITIVITY)
     # Initializing game:
     game_status = 0
     l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx = initialize_game(win_w, win_h, l_gyro, r_gyro)
+    recent_calibration = False # This variable has been added as a workaround to avoid that paddles calibration occurs two times consecutively.
 
     while True:
 
         if game_status == SCENE_WELCOME:
-            game_status = welcome(WIN, win_w, win_h)
+            game_status = welcome(WIN, win_w, win_h, game_status)
         elif game_status == SCENE_WAITING_PLAYERS: # Waiting for players
-            game_status = wait_players(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score)
+            game_status = wait_players(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status)
         elif game_status == SCENE_COUNTDOWN: # Countdown before start
             game_status = countdown(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score)
         elif game_status == SCENE_GAME_ONGOING: # Game ongoing
             ball.vx = ball_vx
-            game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro)
+            game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, game_status)
         elif game_status == SCENE_GAME_END: # Game finished
             game_status = game_end(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro)
+        elif game_status == SCENE_CALIBRATION: # Paddle/Gyroscopes calibration
+            game_status = calibrate_pads(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score)
             
 if __name__ == '__main__':
     main()
