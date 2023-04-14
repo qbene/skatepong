@@ -30,6 +30,7 @@ pygame.init()
 # Game parameters
 WINNING_SCORE = 2 # Number of goals to win the game
 BALL_ANGLE_MAX = 60 # Max angle after paddle collision (degrees) [30-75]
+VELOCITY_ANGLE_FACTOR = 2 # Allows to increase ball velocity when angle (longer distance) [2 - 3]
 # Delays
 DELAY_INACT_PLAYER = 5 # Delay after which a player is considered inactive (s)
 DELAY_COUNTDOWN = 3 # Countdown initial time before starting the game (s)
@@ -52,7 +53,7 @@ PAD_HEIGHT_RATIO = 0.15 # Ratio to screen height [0.05 - 0.2]
 PAD_X_OFFSET_RATIO = 0.02 # Ratio to screen width [0.01 - 0.02] - Frame offset
 BALL_RADIUS_RATIO = 0.02 # Ratio to min screen width/height [0.01 - 0.04]
 PAD_FLAT_BOUNCE_RATIO = 0.01 # # Ratio to screen width [0.005 - 0.02]
-BALL_V_RATIO = 0.025 # Ratio to min screen width [0.005 - 0.025]
+BALL_V_RATIO = 0.02 # Ratio to min screen width [0.005 - 0.025]
 MID_LINE_HEIGHT_RATIO = 0.05 # Ratio to screen height [ideally 1/x -> int]
 MID_LINE_WIDTH_RATIO = 0.006 # Ratio to screen width [0.005 - 0.01]
 SCORE_Y_OFFSET_RATIO = 0.02 # Ratio to screen height (to set score vertically)
@@ -212,7 +213,7 @@ def check_for_pads_calib(keys, game_status):
         game_status = SCENE_CALIBRATION
     return game_status
 
-def welcome(win, win_w, win_h, game_status):
+def welcome(win, win_w, win_h, game_status, clock):
     """
     Displays a welcome screen for a certain duration at program start.
     """
@@ -226,6 +227,9 @@ def welcome(win, win_w, win_h, game_status):
     
     current_time = time.time()
     while current_time - start_time < 3:
+
+        clock.tick(FPS)
+
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
@@ -235,8 +239,7 @@ def welcome(win, win_w, win_h, game_status):
     game_status = SCENE_WAITING_PLAYERS
     return game_status
 
-#def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, recent_calibration):
-def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status):
+def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, clock):
     """
     Enters 'standby' state before detection of actives players on each skateboard.
     
@@ -249,7 +252,9 @@ def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score,
     ball.reset()
     
     while ((left_player_ready == False) or (right_player_ready == False)):
-            
+
+        clock.tick(FPS)
+
         # Closing game window if red cross clicked or ESCAPE pressed:        
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
@@ -291,7 +296,7 @@ def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score,
     game_status = SCENE_COUNTDOWN
     return game_status
 
-def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score):
+def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, clock):
     """
     Starts a countdown before the game actually begins.
 
@@ -301,6 +306,8 @@ def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_
     current_time = time.time()
     
     while current_time - start_time < DELAY_COUNTDOWN:
+        
+        clock.tick(FPS)
         
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
@@ -322,13 +329,12 @@ def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_
     game_status = SCENE_GAME_ONGOING
     return game_status
 
-def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, ball_vx_straight, game_status):
+def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, ball_vx_straight, game_status, clock):
     """
     Controls the game itself.
     
     1 point each time a player shoots the ball inside the oponent's zone.
     """
-    clock = pygame.time.Clock()
     run = True    
     l_score = 0
     r_score = 0
@@ -353,10 +359,10 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
         vy_r_pad = r_pad.move(win_h)
 
         ball.move()
-
-        handle_collision(ball, l_pad, r_pad, win_w, win_h, ball_vx_straight)
-
-        l_score, r_score = detect_goal(ball, l_score, r_score, win_w, ball_vx_straight)
+        collision = handle_collision(ball, l_pad, r_pad, win_w, win_h, ball_vx_straight)
+        l_score, r_score = detect_goal(ball, l_score, r_score, win_w, ball_vx_straight)        
+        #if collision == True:
+        #    ball.move()
 
         # Managing display:
         win.fill(BLACK)
@@ -369,7 +375,7 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
          
     return game_status, l_score, r_score
 
-def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h_ratio, l_gyro, r_gyro):
+def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h_ratio, l_gyro, r_gyro, clock):
     """
     Announces the winner, with final score.
     
@@ -385,6 +391,8 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
         message = "RIGHT PLAYER WON"
     
     while current_time - start_time < DELAY_GAME_END:
+        
+        clock.tick(FPS)
 
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
@@ -404,7 +412,7 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
     game_status = SCENE_WAITING_PLAYERS 
     return game_status        
 
-def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score):
+def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, clock):
     """
     Handles the paddles calibration.
     
@@ -419,6 +427,8 @@ def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_scor
     
     # Announcing that calibration is about to take place
     while current_time - start_time < DELAY_BEF_PAD_CALIB:
+
+        clock.tick(FPS)
 
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
@@ -439,6 +449,8 @@ def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_scor
         
         current_time = time.time()
     
+    clock.tick(FPS)
+    
     # Managing display:
     win.fill(BLACK)
     draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), "CALIBRATION ONGOING...", win_w // 2, win_h // 4, WHITE)
@@ -456,8 +468,11 @@ def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_scor
     # Annoucing that calibration has been performed :
     start_time = time.time()
     current_time = time.time()
+
     while current_time - start_time < DELAY_AFT_PAD_CALIB:
-        
+
+        clock.tick(FPS)
+
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
@@ -526,6 +541,7 @@ def handle_collision(ball, l_pad,r_pad, win_w, win_h, ball_vx_straight):
     - Calculates ball angle after collision with paddle depending
     ...on the collision point.
     """
+    collision = False
     # Collision with top wall or bottom wall:
     if ((ball.y + ball.r >= win_h) or (ball.y - ball.r <= 0)):
         ball.vy *= -1
@@ -542,10 +558,11 @@ def handle_collision(ball, l_pad,r_pad, win_w, win_h, ball_vx_straight):
                     #vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w)
                     #vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w)
                     # Faster when there is an angle to compensate for longer distance
-                    vx = round(math.cos(math.radians(angle)) * ball_vx_straight) * (2 - math.cos(math.radians(angle)))
-                    vy = round(math.sin(math.radians(angle)) * ball_vx_straight) * (2 - math.cos(math.radians(angle)))                    
+                    vx = round(math.cos(math.radians(angle)) * ball_vx_straight) * (VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))
+                    vy = round(math.sin(math.radians(angle)) * ball_vx_straight) * (VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                    
                     ball.vy = vy
                     ball.vx = vx
+                collision = True
     # Collision with right paddle:
     else:
         if ball.x + ball.r >= r_pad.x:
@@ -559,10 +576,12 @@ def handle_collision(ball, l_pad,r_pad, win_w, win_h, ball_vx_straight):
                     #vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w)
                     #vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w)
                     # Faster when there is an angle to compensate for longer distance
-                    vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w) * (2 - math.cos(math.radians(angle)))
-                    vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w) * (2 - math.cos(math.radians(angle)))                                        
+                    vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w) * (VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))
+                    vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w) * (VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                                        
                     ball.vy = vy
                     ball.vx = -vx
+                collision = True
+    return collision
 
 def detect_goal(ball, l_score, r_score, win_w, ball_vx_straight):
     """
@@ -626,7 +645,7 @@ def main():
         SCENE_GAME_END : Announces the winner, with final score.
         SCENE_CALIBRATION : Allows to calibrate paddles when requested by user.
     """
-    #clock = pygame.time.Clock()
+    clock = pygame.time.Clock()
     # Creating game window:
     WIN, win_w, win_h = create_window(DEV_MODE)
     # Creating the 2 gyroscopes objects:
@@ -639,18 +658,18 @@ def main():
     while True:
 
         if game_status == SCENE_WELCOME:
-            game_status = welcome(WIN, win_w, win_h, game_status)
+            game_status = welcome(WIN, win_w, win_h, game_status, clock)
         elif game_status == SCENE_WAITING_PLAYERS: # Waiting for players
-            game_status = wait_players(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status)
+            game_status = wait_players(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, clock)
         elif game_status == SCENE_COUNTDOWN: # Countdown before start
-            game_status = countdown(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score)
+            game_status = countdown(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, clock)
         elif game_status == SCENE_GAME_ONGOING: # Game ongoing
             ball.vx = ball_vx_straight
-            game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, ball_vx_straight, game_status)
+            game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, ball_vx_straight, game_status, clock)
         elif game_status == SCENE_GAME_END: # Game finished
-            game_status = game_end(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro)
+            game_status = game_end(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, clock)
         elif game_status == SCENE_CALIBRATION: # Paddle/Gyroscopes calibration
-            game_status = calibrate_pads(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score)
+            game_status = calibrate_pads(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, clock)
             
 if __name__ == '__main__':
     main()
