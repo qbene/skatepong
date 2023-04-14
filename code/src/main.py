@@ -6,9 +6,10 @@
 
 import pygame
 import math
+import random
+import time
 from mpu6050 import mpu6050
 from gyro import Gyro_one_axis
-import time
 
 #------------------------------------------------------------------------------
 # DEVELOPMENT VARIABLES
@@ -44,7 +45,7 @@ mpu6050.GYRO_RANGE_500DEG
 mpu6050.GYRO_RANGE_1000DEG
 mpu6050.GYRO_RANGE_2000DEG
 """
-# Sizes
+# Sizes ([indicates recommended values])
 WELCOME_RADIUS_RATIO = 0.25 # Ratio to screen height [0.1 - 0.5]
 PAD_WIDTH_RATIO = 0.02 # Ratio to screen width [0.01 - 0.1]
 PAD_HEIGHT_RATIO = 0.15 # Ratio to screen height [0.05 - 0.2]
@@ -52,8 +53,10 @@ PAD_X_OFFSET_RATIO = 0.02 # Ratio to screen width [0.01 - 0.02] - Frame offset
 BALL_RADIUS_RATIO = 0.02 # Ratio to min screen width/height [0.01 - 0.04]
 PAD_FLAT_BOUNCE_RATIO = 0.01 # # Ratio to screen width [0.005 - 0.02]
 BALL_V_RATIO = 0.025 # Ratio to min screen width [0.005 - 0.025]
-MID_LINE_HEIGHT_RATIO = 0.05 # Ratio to screen height  [ideally 1/x -> int]
+MID_LINE_HEIGHT_RATIO = 0.05 # Ratio to screen height [ideally 1/x -> int]
+MID_LINE_WIDTH_RATIO = 0.006 # Ratio to screen width [0.005 - 0.01]
 SCORE_Y_OFFSET_RATIO = 0.02 # Ratio to screen height (to set score vertically)
+CENTER_CROSS_MULTIPLIER = 3 # To be multiplied with MID_LINE_WIDTH_RATIO [2 - 5]
 # Texts
 FONT_NAME = "comicsans" # Font used for texts
 FONT_RATIO_0_05 = 0.05 # Ratio to screen height
@@ -183,20 +186,23 @@ def draw_text(win, font_name, font_size, text, center_x, center_y, color, bg_col
     text_rect.center = (center_x, center_y)
     win.blit(text_surf, text_rect)
 
-def draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = False, draw_ball = False, draw_scores = False):
+def draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = False, draw_ball = False, draw_scores = False, draw_line = False):
     """
     Draws on a surface the desired game elements (pads / ball / scores)
     
     Note : Each scene of the game do not require every single game object 
     """
+    if draw_scores == True:
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(l_score), win_w // 4, int(FONT_RATIO_0_1 * win_h), WHITE)
+        draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(r_score), (win_w * 3) // 4, int(FONT_RATIO_0_1 * win_h), WHITE)
+    if draw_line == True:        
+        draw_mid_line(win, win_w, win_h, dashed = False)
     if draw_pads == True:
         l_pad.draw(win)
         r_pad.draw(win)
     if draw_ball == True:
         ball.draw(win)
-    if draw_scores == True:
-        draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(l_score), win_w // 4, int(FONT_RATIO_0_1 * win_h), WHITE)
-        draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), str(r_score), (win_w * 3) // 4, int(FONT_RATIO_0_1 * win_h), WHITE) 
+
 
 def check_for_pads_calib(keys, game_status):
     """
@@ -240,7 +246,7 @@ def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score,
     current_time = time.time()
     left_player_ready = False
     right_player_ready = False
-    ball.vx = 0
+    ball.reset()
     
     while ((left_player_ready == False) or (right_player_ready == False)):
             
@@ -264,7 +270,7 @@ def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score,
         win.fill(BLACK)
         draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), message, win_w // 2, win_h // 4, WHITE)
         draw_text(win, FONT_NAME, int(FONT_RATIO_0_05 * win_h), "MOVE SKATES TO START", win_w // 2, (win_h * 3) // 4, WHITE)
-        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = False)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
         pygame.display.update()
         
         vy_l_pad = l_pad.move(win_h)
@@ -308,7 +314,7 @@ def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_
         # Managing display:
         win.fill(BLACK)
         draw_text(win, FONT_NAME, int(FONT_RATIO_0_2 * win_h), str(time_before_start), win_w // 2, win_h // 4, WHITE)
-        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = False)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
         pygame.display.update()
 
         current_time = time.time()
@@ -316,7 +322,7 @@ def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_
     game_status = SCENE_GAME_ONGOING
     return game_status
 
-def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, game_status):
+def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, ball_vx_straight, game_status):
     """
     Controls the game itself.
     
@@ -326,6 +332,11 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
     run = True    
     l_score = 0
     r_score = 0
+    random_number = random.randint(1, 2)
+    if random_number == 1:
+        ball.vx =  ball_vx_straight # Ball going to the right at start
+    else:
+        ball.vx =  -ball_vx_straight # Ball going to the left at start
     while (l_score < WINNING_SCORE and r_score < WINNING_SCORE):
 
         clock.tick(FPS)
@@ -343,13 +354,13 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
 
         ball.move()
 
-        handle_collision(ball, l_pad, r_pad, win_w, win_h)
+        handle_collision(ball, l_pad, r_pad, win_w, win_h, ball_vx_straight)
 
-        l_score, r_score = detect_goal(ball, l_score, r_score, win_w)
+        l_score, r_score = detect_goal(ball, l_score, r_score, win_w, ball_vx_straight)
 
         # Managing display:
         win.fill(BLACK)
-        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = True)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = True, draw_scores = True, draw_line = True)
         pygame.display.update()   
 
         if (l_score >= WINNING_SCORE or r_score >= WINNING_SCORE):
@@ -366,8 +377,7 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
     """
     start_time = time.time()
     current_time = time.time()
-    ball.vx = 0
-    ball.vy = 0
+    ball.reset()
     
     if (l_score == WINNING_SCORE):
         message = "LEFT PLAYER WON"
@@ -385,7 +395,7 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
 
         # Managing display:
         win.fill(BLACK)
-        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = False, draw_scores = True)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = False, draw_scores = True, draw_line = False)
         draw_text(win, FONT_NAME, int(FONT_RATIO_0_15 * win_h), message, win_w // 2, win_h // 2, WHITE)
         pygame.display.update()
 
@@ -405,6 +415,7 @@ def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_scor
     """
     start_time = time.time()
     current_time = time.time()
+    ball.reset()
     
     # Announcing that calibration is about to take place
     while current_time - start_time < DELAY_BEF_PAD_CALIB:
@@ -423,7 +434,7 @@ def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_scor
         draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), "CALIBRATION IS ABOUT TO START", win_w // 2, win_h // 4, WHITE)
         draw_text(win, FONT_NAME, int(FONT_RATIO_0_05 * win_h), "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS", win_w // 2, (win_h * 3) // 4, WHITE)
         draw_text(win, FONT_NAME, int(FONT_RATIO_0_2 * win_h), str(time_before_start), win_w // 2, win_h // 2, WHITE)
-        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = False, draw_scores = False)
+        draw_game_objects(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, draw_pads = True, draw_ball = False, draw_scores = False, draw_line = False)
         pygame.display.update()
         
         current_time = time.time()
@@ -477,21 +488,37 @@ def compute_elements_sizes(win_w, win_h):
     pad_w = int(win_w*PAD_WIDTH_RATIO)
     pad_h = int(win_h*PAD_HEIGHT_RATIO)
     ball_r = min(int(win_w*BALL_RADIUS_RATIO), int(win_h*BALL_RADIUS_RATIO))
-    ball_vx = int(BALL_V_RATIO*win_w)
-    return pad_w, pad_h, ball_r, ball_vx
+    ball_vx_straight = int(BALL_V_RATIO*win_w)
+    return pad_w, pad_h, ball_r, ball_vx_straight
 
-def draw_mid_line(win, win_width,win_height,mid_line_height_ratio):
+def draw_mid_line(win, win_w, win_h, dashed = False):
     """
-    Draws dashed line in the middle of the screen.
+    Draws vertical line in the middle of the screen.
     """
-    line_element_height = round(win_height*mid_line_height_ratio)
-    nb_iterations = round(1/mid_line_height_ratio)-1
-    for i in range(0, nb_iterations):
-        if i % 2 == 1:
-            continue
-        pygame.draw.rect(win, WHITE, (win_width//2 - 5, i*line_element_height+line_element_height//2, 10, line_element_height))
+    
+    if dashed == True:
+        # Dashed line
+        dash_w = round(win_w * MID_LINE_WIDTH_RATIO)
+        dash_h = round(win_h * MID_LINE_HEIGHT_RATIO)    
+        nb_iterations = round(1 / MID_LINE_HEIGHT_RATIO)
+        if nb_iterations % 2 == 0:
+            for i in range(0, nb_iterations):
+                if i % 2 == 1:
+                    continue
+                pygame.draw.rect(win, WHITE, ((win_w - MID_LINE_WIDTH_RATIO) // 2, i * dash_h + dash_h // 2, dash_w, dash_h))
+        else:
+            for i in range(0, nb_iterations):
+                if i % 2 == 1:
+                    continue
+                pygame.draw.rect(win, WHITE, ((win_w - MID_LINE_WIDTH_RATIO) // 2, i * dash_h, dash_w, dash_h))
+            
+    else:
+    # Straight line, with small center cross
+        line_w = int(win_w * MID_LINE_WIDTH_RATIO)
+        pygame.draw.rect(win, WHITE, ((win_w - line_w) // 2, 0, line_w, win_h))
+        pygame.draw.rect(win, WHITE, ((win_w - CENTER_CROSS_MULTIPLIER * line_w) // 2, (win_h - line_w) // 2, CENTER_CROSS_MULTIPLIER * line_w, line_w))
 
-def handle_collision(ball, l_pad,r_pad, win_w, win_h):
+def handle_collision(ball, l_pad,r_pad, win_w, win_h, ball_vx_straight):
     """
     Handles ball collision with paddles and top/bottom walls.
     
@@ -507,16 +534,16 @@ def handle_collision(ball, l_pad,r_pad, win_w, win_h):
         if ball.x - ball.r <= l_pad.x + l_pad.w:
             if ball.y >= l_pad.y and ball.y <= l_pad.y + l_pad.h:            
                 y_pad_mid = l_pad.y + l_pad.h // 2
-                if (ball.y < y_pad_mid+PAD_FLAT_BOUNCE_RATIO*win_w and ball.y > y_pad_mid-PAD_FLAT_BOUNCE_RATIO*win_w):
-                    ball.vx = abs(ball.original_vx)                    
+                if (ball.y < y_pad_mid + PAD_FLAT_BOUNCE_RATIO*win_w and ball.y > y_pad_mid - PAD_FLAT_BOUNCE_RATIO * win_w):
+                    ball.vx = ball_vx_straight                    
                 else:
                     angle = round((ball.y - y_pad_mid) / (l_pad.h / 2) * BALL_ANGLE_MAX)
                     # Constant speed
                     #vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w)
                     #vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w)
                     # Faster when there is an angle to compensate for longer distance
-                    vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w) * (2 - math.cos(math.radians(angle)))
-                    vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w) * (2 - math.cos(math.radians(angle)))                    
+                    vx = round(math.cos(math.radians(angle)) * ball_vx_straight) * (2 - math.cos(math.radians(angle)))
+                    vy = round(math.sin(math.radians(angle)) * ball_vx_straight) * (2 - math.cos(math.radians(angle)))                    
                     ball.vy = vy
                     ball.vx = vx
     # Collision with right paddle:
@@ -524,8 +551,8 @@ def handle_collision(ball, l_pad,r_pad, win_w, win_h):
         if ball.x + ball.r >= r_pad.x:
             if ball.y >= r_pad.y and ball.y <= r_pad.y + r_pad.h:
                 y_pad_mid = r_pad.y + r_pad.h // 2
-                if (ball.y < y_pad_mid+PAD_FLAT_BOUNCE_RATIO*win_w and ball.y > y_pad_mid-PAD_FLAT_BOUNCE_RATIO*win_w):
-                    ball.vx = -abs(ball.original_vx)   
+                if (ball.y < y_pad_mid + PAD_FLAT_BOUNCE_RATIO * win_w and ball.y > y_pad_mid-PAD_FLAT_BOUNCE_RATIO * win_w):
+                    ball.vx = -ball_vx_straight    
                 else:
                     angle = round((ball.y - y_pad_mid) / (r_pad.h / 2) * BALL_ANGLE_MAX)
                     # Constant speed
@@ -537,7 +564,7 @@ def handle_collision(ball, l_pad,r_pad, win_w, win_h):
                     ball.vy = vy
                     ball.vx = -vx
 
-def detect_goal(ball, l_score, r_score, win_w):
+def detect_goal(ball, l_score, r_score, win_w, ball_vx_straight):
     """
     Handles when goals are scored, and updates scores.
     """
@@ -549,7 +576,7 @@ def detect_goal(ball, l_score, r_score, win_w):
         vx_direction_after_goal = -1
     if ball.x < 0 or ball.x > win_w:
         ball.reset()
-        ball.vx *= vx_direction_after_goal
+        ball.vx = ball_vx_straight * vx_direction_after_goal
     
     return l_score, r_score
 
@@ -571,17 +598,17 @@ def initialize_game(win_w, win_h, l_gyro, r_gyro):
     # - Both paddles are centered vertically
     # - The ball is created in the center of the display, with a horizontal velovity
     mid_line_h = round(MID_LINE_HEIGHT_RATIO *  win_h)
-    pad_w, pad_h, ball_r, ball_vx = compute_elements_sizes(win_w, win_h)
+    pad_w, pad_h, ball_r, ball_vx_straight = compute_elements_sizes(win_w, win_h)
     l_pad_x = PAD_X_OFFSET_RATIO * win_w
     r_pad_x = win_w - PAD_X_OFFSET_RATIO*win_w - pad_w
     pad_y = (win_h - pad_h) // 2
     l_pad = Paddle(l_pad_x, pad_y, pad_w, pad_h, l_gyro)
     r_pad = Paddle(r_pad_x, pad_y, pad_w, pad_h, r_gyro)
-    ball = Ball(win_w // 2, win_h // 2, ball_r, ball_vx, 0)
+    ball = Ball(win_w // 2, win_h // 2, ball_r, 0, 0)
     # Initializing game variables:
     l_score = 0
     r_score = 0
-    return l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx
+    return l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx_straight
 
 def main():
     """
@@ -607,8 +634,7 @@ def main():
     r_gyro = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', GYRO_SENSITIVITY)
     # Initializing game:
     game_status = 0
-    l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx = initialize_game(win_w, win_h, l_gyro, r_gyro)
-    recent_calibration = False # This variable has been added as a workaround to avoid that paddles calibration occurs two times consecutively.
+    l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx_straight = initialize_game(win_w, win_h, l_gyro, r_gyro)
 
     while True:
 
@@ -619,8 +645,8 @@ def main():
         elif game_status == SCENE_COUNTDOWN: # Countdown before start
             game_status = countdown(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score)
         elif game_status == SCENE_GAME_ONGOING: # Game ongoing
-            ball.vx = ball_vx
-            game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, game_status)
+            ball.vx = ball_vx_straight
+            game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, ball_vx_straight, game_status)
         elif game_status == SCENE_GAME_END: # Game finished
             game_status = game_end(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro)
         elif game_status == SCENE_CALIBRATION: # Paddle/Gyroscopes calibration
