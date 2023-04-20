@@ -49,11 +49,11 @@ mpu6050.GYRO_RANGE_2000DEG
 # Sizes ([indicates recommended values])
 WELCOME_RADIUS_RATIO = 0.25 # Ratio to screen height [0.1 - 0.5]
 PAD_WIDTH_RATIO = 0.02 # Ratio to screen width [0.01 - 0.1]
-PAD_HEIGHT_RATIO = 0.15 # Ratio to screen height [0.05 - 0.2]
+PAD_HEIGHT_RATIO = 0.4#0.15 # Ratio to screen height [0.05 - 0.2]
 PAD_X_OFFSET_RATIO = 0.2#0.02 # Ratio to screen width [0.01 - 0.02] - Frame offset
 BALL_RADIUS_RATIO = 0.02 # Ratio to min screen width/height [0.01 - 0.04]
 PAD_FLAT_BOUNCE_RATIO = 0.01 # # Ratio to screen width [0.005 - 0.02]
-BALL_V_RATIO = 0.02 # Ratio to min screen width [0.005 - 0.025]
+BALL_V_RATIO = 0.05#0.02 # Ratio to min screen width [0.005 - 0.025]
 MID_LINE_HEIGHT_RATIO = 0.05 # Ratio to screen height [ideally 1/x -> int]
 MID_LINE_WIDTH_RATIO = 0.006 # Ratio to screen width [0.005 - 0.01]
 SCORE_Y_OFFSET_RATIO = 0.02 # Ratio to screen height (to set score vertically)
@@ -160,14 +160,14 @@ class Ball:
         self.vx = self.original_vx
         self.vy = self.original_vy
 
-def create_window(DEV_MODE):
+def create_window(dev_mode = False):
     """
     Initializes game window, and adjusts size to display resolution.
     """
     #disp_w, disp_h = pygame.display.get_desktop_sizes()
     disp_w = pygame.display.Info().current_w # Display width (in pixels)
     disp_h = pygame.display.Info().current_h # Display height (in pixels)
-    if DEV_MODE == True:
+    if dev_mode == True:
         WIN = pygame.display.set_mode([disp_w, disp_h-100])
         pygame.display.set_caption("Skatepong")         
     else:
@@ -331,10 +331,14 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
     r_score = 0
     goal_to_be = False
     random_number = random.randint(1, 2)
+    """
     if random_number == 1:
         ball.vx =  ball_vx_straight # Ball going to the right at start
     else:
         ball.vx =  -ball_vx_straight # Ball going to the left at start
+    """
+    ball.vx = 57
+    ball.vy = 30
     while (l_score < WINNING_SCORE and r_score < WINNING_SCORE):
 
         clock.tick(FPS)
@@ -533,7 +537,7 @@ def draw_mid_line(win, win_w, win_h, dashed = False):
         pygame.draw.rect(win, WHITE, ((win_w - line_w) // 2, 0, line_w, win_h))
         pygame.draw.rect(win, WHITE, ((win_w - CENTER_CROSS_MULTIPLIER * line_w) // 2, (win_h - line_w) // 2, CENTER_CROSS_MULTIPLIER * line_w, line_w))
 
-def top_bottom_collision(ball, win_h):
+def handle_top_bottom_collision(ball, win_h):
     """ Collision with top or bottom wall"""
     # Bottom wall
     if (ball.y + ball.r >= win_h):
@@ -546,7 +550,7 @@ def top_bottom_collision(ball, win_h):
     ball.y = y_mod 
     ball.vy *= -1
     
-def left_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be):
+def handle_left_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be):
     #goal_to_be = False
     if ball.x - ball.r <= l_pad.x + l_pad.w:
         x_mod = l_pad.original_x + l_pad.w + ball.r
@@ -571,10 +575,9 @@ def left_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be):
             ball.y = y_mod
         else:
             goal_to_be = True
-            print("YEEEEESSSS")
     return goal_to_be
 
-def right_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be):
+def handle_right_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be):
     #goal_to_be = False
     if ball.x + ball.r >= r_pad.x:
         x_mod = r_pad.original_x - ball.r
@@ -600,8 +603,24 @@ def right_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be):
             ball.y = y_mod
         else:
             goal_to_be = True
-            print("YEEEEESSSS")
     return goal_to_be
+
+def check_collision(ball, l_pad,r_pad, win_h):
+    
+    bottom_collision = False
+    top_collision = False
+    left_collision = False
+    right_collision = False
+    if (ball.y + ball.r >= win_h):
+        bottom_collision = True
+    elif (ball.y - ball.r <= 0):
+        top_collision = True
+    if ((ball.vx < 0) and (ball.x - ball.r <= l_pad.x + l_pad.w)):
+        left_collision = True
+    elif ((ball.vx > 0) and (ball.x + ball.r >= r_pad.x)):
+        right_collision = True
+            
+    return bottom_collision, top_collision, left_collision, right_collision
 
 def handle_collision(ball, l_pad,r_pad, win_w, win_h, ball_vx_straight, goal_to_be):
     """
@@ -611,16 +630,61 @@ def handle_collision(ball, l_pad,r_pad, win_w, win_h, ball_vx_straight, goal_to_
     - Calculates ball angle after collision with paddle depending
     ...on the collision point.
     """
+    
+    bottom_collision, top_collision, left_collision, right_collision = check_collision(ball, l_pad,r_pad, win_h)
+    
+    # Left paddle possible collision case
+    if (left_collision and goal_to_be == False):
+        # Ball also colliding with bottom wall
+        if bottom_collision:
+            y_mod = win_h - ball.r  
+        # Ball also colliding with top wall
+        elif top_collision:
+            y_mod = ball.r
+        # Neef to determine which collision would arrive first: top/bottom wall or left paddle ?
+        if bottom_collision or top_collision:
+            x_mod = int(ball.x - ((ball.vx * (ball.y - y_mod)) / ball.vy))
+            # Top/bottom wall collision first :
+            if x_mod > (l_pad.x + l_pad.w):
+                handle_top_bottom_collision(ball, win_h)
+            # Left padlle collision would arrive first if paddle well positioned
+            else:
+                goal_to_be = handle_left_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be)
+                # If left paddle not well positioned, a goal will hapen, but still needs to manage boucing on top/bottom wall
+                if goal_to_be:
+                    handle_top_bottom_collision(ball, win_h)
+        # Left paddle collision possible and no collision with top/bottom walls
+        else:
+            goal_to_be = handle_left_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be)
 
-    # Collision with top wall or bottom wall:    
-    if (ball.y + ball.r >= win_h) or (ball.y - ball.r <= 0):
-        top_bottom_collision(ball, win_h)
-    # Collision with left paddle:
-    elif (ball.vx < 0) and (ball.x - ball.r <= l_pad.x + l_pad.w) and goal_to_be == False:
-        goal_to_be = left_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be)
-    # Collision with right paddle:
-    elif (ball.vx > 0) and (ball.x + ball.r >= r_pad.x) and goal_to_be == False:
-        goal_to_be = right_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be)
+    # Right paddle possible collision case
+    elif (right_collision and goal_to_be == False):
+        # Ball also colliding with bottom wall
+        if bottom_collision:
+            y_mod = win_h - ball.r  
+        # Ball also colliding with top wall
+        elif top_collision:
+            y_mod = ball.r
+        # Neef to determine which collision would arrive first: top/bottom wall or right paddle ?
+        if bottom_collision or top_collision:
+            x_mod = int(ball.x - ((ball.vx * (ball.y - y_mod)) / ball.vy))
+            # Top/bottom wall collision first :
+            if x_mod < r_pad.x:
+                handle_top_bottom_collision(ball, win_h)
+            # Right padlle collision would arrive first if paddle well positioned
+            else:        
+                goal_to_be = handle_right_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be)
+                # If right paddle not well positioned, a goal will hapen, but still needs to manage boucing on top/bottom wall
+                if goal_to_be:
+                    handle_top_bottom_collision(ball, win_h)
+        # Right paddle collision possible and no collision with top/bottom walls
+        else:
+            goal_to_be = handle_right_collision(ball, l_pad, r_pad, win_w, ball_vx_straight, goal_to_be)
+    
+    # No possible collision with paddles, but just with top or bottom walls
+    elif (bottom_collision or top_collision):
+        handle_top_bottom_collision(ball, win_h)
+
     return goal_to_be
 
 def detect_goal(ball, l_score, r_score, win_w, ball_vx_straight, goal_to_be):
@@ -664,7 +728,16 @@ def initialize_game(win_w, win_h, l_gyro, r_gyro):
     pad_y = (win_h - pad_h) // 2
     l_pad = Paddle(l_pad_x, pad_y, pad_w, pad_h, l_gyro)
     r_pad = Paddle(r_pad_x, pad_y, pad_w, pad_h, r_gyro)
+    #ball = Ball(win_w // 2, win_h // 2, ball_r, 0, 0)
+    # DEV ONLY
     ball = Ball(win_w // 2, win_h // 2, ball_r, 0, 0)
+    angle = round(math.atan((win_h/2)/((win_w/2)-l_pad.w-l_pad.original_x)), 3)
+    Y = win_h/2
+    X = (win_w/2)-l_pad.w-l_pad.original_x-ball.r
+    print("angle:", angle)
+    print("(X,Y) :", X, Y)
+    print("X/Y :", X/Y)
+    #round(math.cos(math.radians(angle))
     # Initializing game variables:
     l_score = 0
     r_score = 0
