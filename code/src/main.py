@@ -48,12 +48,12 @@ mpu6050.GYRO_RANGE_2000DEG
 """
 # Sizes ([indicates recommended values])
 WELCOME_RADIUS_RATIO = 0.25 # Ratio to screen height [0.1 - 0.5]
-PAD_WIDTH_RATIO = 0.02 # Ratio to screen width [0.01 - 0.1]
-PAD_HEIGHT_RATIO = 0.4#0.15 # Ratio to screen height [0.05 - 0.2]
-PAD_X_OFFSET_RATIO = 0.2#0.02 # Ratio to screen width [0.01 - 0.02] - Frame offset
+PAD_WIDTH_RATIO = 0.015 # Ratio to screen width [0.005 - 0.1]
+PAD_HEIGHT_RATIO = 0.2 # Ratio to screen height [0.05 - 0.2]
+PAD_X_OFFSET_RATIO = 0.02 # Ratio to screen width [0.01 - 0.02] - Frame offset
 BALL_RADIUS_RATIO = 0.02 # Ratio to min screen width/height [0.01 - 0.04]
 PAD_FLAT_BOUNCE_RATIO = 0.01 # # Ratio to screen width [0.005 - 0.02]
-BALL_V_RATIO = 0.05#0.02 # Ratio to min screen width [0.005 - 0.025]
+BALL_V_RATIO = 0.025 # Ratio to min screen width [0.005 - 0.025]
 MID_LINE_HEIGHT_RATIO = 0.05 # Ratio to screen height [ideally 1/x -> int]
 MID_LINE_WIDTH_RATIO = 0.006 # Ratio to screen width [0.005 - 0.01]
 SCORE_Y_OFFSET_RATIO = 0.02 # Ratio to screen height (to set score vertically)
@@ -100,25 +100,37 @@ class Paddle:
         pygame.draw.rect(win, self.COLOR, (self.x, self.y, self.w, self.h))
 
     def compute_pad_velocity(self):
-        gyro_raw = self.gyro.get_data()
-        gyro_calib = gyro_raw - self.gyro.offset
-        if gyro_calib < -200:
-            vy = -30
-        elif  (gyro_calib >= -200 and gyro_calib < -50):
-            vy = -20
-        elif (gyro_calib >= -50 and gyro_calib < -10): 
-            vy = -10    
-        elif (gyro_calib >= -10 and gyro_calib < 10):
+        
+        # Handling gyroscope i2c deconnection
+        try:
+            gyro_raw = self.gyro.get_data()
+        except IOError:
+            print("i2c communication with gyroscope failed")
+            self.gyro.error = True
+            self.gyro.ready_for_reinit = False
             vy = 0
-        elif (gyro_calib >= 10 and gyro_calib < 50):
-            vy = 10
-        elif (gyro_calib >= 50 and gyro_calib < 200):
-            vy = 20
-        elif gyro_calib >= 200:
-            vy = 30
+        # Computing pad velocity if gyroscope is connected
         else:
-            vy = 5
-        print("Gyro (" + self.gyro.axis + " axis) => Raw data :", str(round(gyro_raw,2)), "/ Calibrated data :", str(round(gyro_calib,2)))
+            self.gyro.ready_for_reinit = True
+            #gyro_raw = self.gyro.get_data()
+            gyro_calib = gyro_raw - self.gyro.offset
+            if gyro_calib < -200:
+                vy = -30
+            elif  (gyro_calib >= -200 and gyro_calib < -50):
+                vy = -20
+            elif (gyro_calib >= -50 and gyro_calib < -10): 
+                vy = -10    
+            elif (gyro_calib >= -10 and gyro_calib < 10):
+                vy = 0
+            elif (gyro_calib >= 10 and gyro_calib < 50):
+                vy = 10
+            elif (gyro_calib >= 50 and gyro_calib < 200):
+                vy = 20
+            elif gyro_calib >= 200:
+                vy = 30
+            else:
+                vy = 5
+            print("Gyro (" + self.gyro.axis + " axis) => Raw data :", str(round(gyro_raw,2)), "/ Calibrated data :", str(round(gyro_calib,2)))
         return vy
 
     def move(self, win_h):
@@ -133,7 +145,7 @@ class Paddle:
     
     def move_to_center(self, win_h):
         self.y = (win_h - self.h) // 2
-    
+
 class Ball:
     COLOR = WHITE
 
@@ -249,7 +261,10 @@ def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score,
         # Closing game window if red cross clicked or ESCAPE pressed:        
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
-        
+
+        # Reinitializing gyro if necessary (after i2c deconnection)
+        reinitialize_gyro_if_needed(l_gyro, r_gyro)
+
         # Going to paddles calibration scene upon user request:
         game_status = check_for_pads_calib(keys, game_status)
         if game_status == SCENE_CALIBRATION:
@@ -304,6 +319,9 @@ def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
 
+        # Reinitializing gyro if necessary (after i2c deconnection)
+        reinitialize_gyro_if_needed(l_gyro, r_gyro)
+
         time_before_start = DELAY_COUNTDOWN - int(current_time - start_time) 
 
         vy_l_pad = l_pad.move(win_h)
@@ -350,6 +368,9 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
         game_status = check_for_pads_calib(keys, game_status)
         if game_status == SCENE_CALIBRATION:
             return game_status, l_score, r_score
+        
+        # Reinitializing gyro if necessary (after i2c deconnection)
+        reinitialize_gyro_if_needed(l_gyro, r_gyro)
 
         vy_l_pad = l_pad.move(win_h)
         vy_r_pad = r_pad.move(win_h)
@@ -357,7 +378,6 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
         ball.move()
         goal_to_be = handle_collision(ball, l_pad, r_pad, win_w, win_h, ball_vx_straight, goal_to_be)
         l_score, r_score, goal_to_be = detect_goal(ball, l_score, r_score, win_w, ball_vx_straight, goal_to_be)        
-        print("Goal_to_be: ", goal_to_be)
 
         # Managing display:
         win.fill(BLACK)
@@ -392,6 +412,9 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
+
+        # Reinitializing gyro if necessary (after i2c deconnection)
+        reinitialize_gyro_if_needed(l_gyro, r_gyro)
 
         vy_l_pad = l_pad.move(win_h)
         vy_r_pad = r_pad.move(win_h)
@@ -438,6 +461,9 @@ def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_scor
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
 
+        # Reinitializing gyro if necessary (after i2c deconnection)
+        reinitialize_gyro_if_needed(l_gyro, r_gyro)
+
         time_before_start = DELAY_BEF_PAD_CALIB - int(current_time - start_time)
        
         vy_l_pad = l_pad.move(win_h)
@@ -480,6 +506,9 @@ def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_scor
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
         check_exit_game(keys)
+
+        # Reinitializing gyro if necessary (after i2c deconnection)
+        reinitialize_gyro_if_needed(l_gyro, r_gyro)
 
         time_before_start = DELAY_AFT_PAD_CALIB - int(current_time - start_time)
 
@@ -743,6 +772,62 @@ def initialize_game(win_w, win_h, l_gyro, r_gyro):
     r_score = 0
     return l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx_straight
 
+
+def reinitialize_gyro_if_needed(l_gyro, r_gyro):
+    """
+    Recreate gyroscopes objects following deconnections.
+    """
+    if l_gyro.error == True and l_gyro.ready_for_reinit == True:
+        try:
+            l_gyro = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', GYRO_SENSITIVITY)
+        except IOError:
+            pass
+    if r_gyro.error == True and r_gyro.ready_for_reinit == True:
+        try:
+            r_gyro = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', GYRO_SENSITIVITY)
+        except IOError:
+            pass
+    return l_gyro, r_gyro
+
+def test_gyroscope_connection(win, win_w, win_h):
+    """
+    Game does not start if both skateboards are not connected at startup.
+    """
+    
+    both_gyros_connected = False
+    while both_gyros_connected != True:
+        
+        try:
+            l_gyro = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', GYRO_SENSITIVITY)
+        except IOError:
+            l_gyro_connected = False
+        else:
+            l_gyro_connected = True
+        
+        try:
+            r_gyro = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', GYRO_SENSITIVITY)
+        except IOError:
+            r_gyro_connected = False
+        else:
+            r_gyro_connected = True
+        
+        if l_gyro_connected and r_gyro_connected:
+            both_gyros_connected = True
+        
+        if both_gyros_connected == False:
+            # Managing display:
+            win.fill(BLACK)
+            if l_gyro_connected == True and r_gyro_connected == False:
+                message = "Right skateboard NOT connected"
+            elif l_gyro_connected == False and r_gyro_connected == True:
+                message = "Left skateboard NOT connected"
+            else:
+                message = "Please connect skateboards"
+            draw_text(win, FONT_NAME, int(FONT_RATIO_0_1 * win_h), message, win_w // 2, win_h // 2, WHITE)
+            pygame.display.update()
+    
+    return l_gyro, r_gyro
+
 def main():
     """
     Skatepong is a pong game for 2 players, with real skateboards as actuators.
@@ -763,18 +848,18 @@ def main():
     # Creating game window:
     WIN, win_w, win_h = create_window(DEV_MODE)
     # Creating the 2 gyroscopes objects:
-    l_gyro = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', GYRO_SENSITIVITY)
-    r_gyro = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', GYRO_SENSITIVITY)
+
     # Initializing game:
-    game_status = 3 # GAME STATUS DIFFERENT THAN 0 FOR DEV PURPOSES ONLY
-    #game_status = 0
+    game_status = 0
+    game_status = welcome(WIN, win_w, win_h, game_status, clock)
+    l_gyro, r_gyro = test_gyroscope_connection(WIN, win_w, win_h)
     l_pad, r_pad, ball, mid_line_h, l_score, r_score, ball_vx_straight = initialize_game(win_w, win_h, l_gyro, r_gyro)
 
     while True:
 
-        if game_status == SCENE_WELCOME:
-            game_status = welcome(WIN, win_w, win_h, game_status, clock)
-        elif game_status == SCENE_WAITING_PLAYERS: # Waiting for players
+        #if game_status == SCENE_WELCOME:
+        #    game_status = welcome(WIN, win_w, win_h, game_status, clock)
+        if game_status == SCENE_WAITING_PLAYERS: # Waiting for players
             game_status = wait_players(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, clock)
         elif game_status == SCENE_COUNTDOWN: # Countdown before start
             game_status = countdown(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, clock)

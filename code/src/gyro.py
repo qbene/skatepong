@@ -21,6 +21,8 @@ class Gyro_one_axis(mpu6050):
         mpu6050.GYRO_RANGE_2000DEG
         """
         self.offset = 0
+        self.error = False
+        self.ready_for_reinit = False
         
         # Calling __init__ of mother class :
         mpu6050.__init__(self,address, bus=1)
@@ -41,7 +43,8 @@ class Gyro_one_axis(mpu6050):
         while i <= nb_calib_pts:
             if i == 1:
                 print("Gyroscope average offset (" + self.axis + " axis) calculation ongoing...")
-            gyro_sum += self.get_gyro_data()[self.axis]
+            #gyro_sum += self.get_gyro_data()[self.axis]
+            gyro_sum += self.get_data()
             i += 1
         gyro_offset = gyro_sum / nb_calib_pts
         print("Gyroscope average offset measured ("+ self.axis + " axis) :", str(round(gyro_offset,2)))
