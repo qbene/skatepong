@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "skatepong"
+version = "0.1.0"
+description = "Skatepong game controlled with real skateboards"
+authors = ["Quentin BENETHUILLERE <quentin.benethuillere@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+#pygame = "2.1.0"
+mpu6050-raspberrypi = "^1.2"
+smbus2 = "^0.4.2"
+
+[tool.poetry.scripts]
+quentin = "test.cli:hello"
+skatepong = "src.main:main"
+gyro = "src.gyro.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
