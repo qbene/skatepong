@@ -10,3 +10,5 @@ work
 # Ignore virtual environment files
 .venv
 
+
+**__pycache__**
