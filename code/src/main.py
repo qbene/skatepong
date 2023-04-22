@@ -235,7 +235,8 @@ def welcome(win, win_w, win_h, game_status, clock):
 
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
-        check_exit_game(keys)
+        game_status = check_user_inputs(keys, game_status)
+        #check_exit_game(keys)
         # Updating current time
         current_time = time.time()
         
@@ -260,13 +261,14 @@ def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score,
 
         # Closing game window if red cross clicked or ESCAPE pressed:        
         keys = pygame.key.get_pressed()
-        check_exit_game(keys)
+        game_status = check_user_inputs(keys, game_status)
+        #check_exit_game(keys)
 
         # Reinitializing gyro if necessary (after i2c deconnection)
         reinitialize_gyro_if_needed(l_gyro, r_gyro)
 
         # Going to paddles calibration scene upon user request:
-        game_status = check_for_pads_calib(keys, game_status)
+        #game_status = check_for_pads_calib(keys, game_status)
         if game_status == SCENE_CALIBRATION:
             return game_status
 
@@ -302,7 +304,7 @@ def wait_players(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score,
     game_status = SCENE_COUNTDOWN
     return game_status
 
-def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, clock):
+def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, clock):
     """
     Starts a countdown before the game actually begins.
 
@@ -317,8 +319,8 @@ def countdown(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_
         
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
-        check_exit_game(keys)
-
+        #check_exit_game(keys)
+        game_status = check_user_inputs(keys, game_status)
         # Reinitializing gyro if necessary (after i2c deconnection)
         reinitialize_gyro_if_needed(l_gyro, r_gyro)
 
@@ -349,24 +351,23 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
     r_score = 0
     goal_to_be = False
     random_number = random.randint(1, 2)
-    """
+    
     if random_number == 1:
         ball.vx =  ball_vx_straight # Ball going to the right at start
     else:
         ball.vx =  -ball_vx_straight # Ball going to the left at start
-    """
-    ball.vx = 57
-    ball.vy = 30
+        
     while (l_score < WINNING_SCORE and r_score < WINNING_SCORE):
 
         clock.tick(FPS)
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
-        check_exit_game(keys)
+        game_status = check_user_inputs(keys, game_status)
+        #check_exit_game(keys)
         
         # Going to paddles calibration scene upon user request:
-        game_status = check_for_pads_calib(keys, game_status)
-        if game_status == SCENE_CALIBRATION:
+        #game_status = check_for_pads_calib(keys, game_status)
+        if game_status == SCENE_CALIBRATION  or game_status == SCENE_WAITING_PLAYERS:
             return game_status, l_score, r_score
         
         # Reinitializing gyro if necessary (after i2c deconnection)
@@ -390,7 +391,7 @@ def game_ongoing(win, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l
          
     return game_status, l_score, r_score
 
-def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h_ratio, l_gyro, r_gyro, clock):
+def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h_ratio, l_gyro, r_gyro, game_status, clock):
     """
     Announces the winner, with final score.
     
@@ -411,7 +412,8 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
 
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
-        check_exit_game(keys)
+        game_status = check_user_inputs(keys, game_status)
+        #check_exit_game(keys)
 
         # Reinitializing gyro if necessary (after i2c deconnection)
         reinitialize_gyro_if_needed(l_gyro, r_gyro)
@@ -430,16 +432,7 @@ def game_end(win, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, mid_line_h
     game_status = SCENE_WAITING_PLAYERS 
     return game_status        
 
-
-def check_for_pads_calib(keys, game_status):
-    """
-    Determines if user has requested paddles calibration.
-    """
-    if keys[pygame.K_p]:
-        game_status = SCENE_CALIBRATION
-    return game_status
-
-def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, clock):
+def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, clock):
     """
     Handles the paddles calibration.
     
@@ -459,7 +452,8 @@ def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_scor
 
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
-        check_exit_game(keys)
+        #check_exit_game(keys)
+        game_status = check_user_inputs(keys, game_status)
 
         # Reinitializing gyro if necessary (after i2c deconnection)
         reinitialize_gyro_if_needed(l_gyro, r_gyro)
@@ -505,7 +499,8 @@ def calibrate_pads(win, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_scor
 
         # Closing game window if red cross clicked or ESCAPE pressed:
         keys = pygame.key.get_pressed()
-        check_exit_game(keys)
+        #check_exit_game(keys)
+        game_status = check_user_inputs(keys, game_status)
 
         # Reinitializing gyro if necessary (after i2c deconnection)
         reinitialize_gyro_if_needed(l_gyro, r_gyro)
@@ -742,6 +737,32 @@ def check_exit_game(keys):
             sys.exit()
     if keys[pygame.K_ESCAPE]:
         sys.exit()
+        
+def check_for_pads_calib(keys, game_status):
+    """
+    Determines if user has requested paddles calibration.
+    """
+    if keys[pygame.K_p]:
+        game_status = SCENE_CALIBRATION
+    elif keys[pygame.K_s]:
+        game_status = SCENE_WAITING_PLAYERS
+    return game_status
+        
+def check_user_inputs(keys, game_status):
+    """
+    Check if user has pressed any button. 
+    """
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+    if keys[pygame.K_ESCAPE]:
+        sys.exit()
+    elif keys[pygame.K_c]:
+        game_status = SCENE_CALIBRATION
+    elif keys[pygame.K_s]:
+        game_status = SCENE_WAITING_PLAYERS
+    return game_status    
+
 
 def initialize_game(win_w, win_h, l_gyro, r_gyro):
     """
@@ -862,14 +883,14 @@ def main():
         if game_status == SCENE_WAITING_PLAYERS: # Waiting for players
             game_status = wait_players(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, clock)
         elif game_status == SCENE_COUNTDOWN: # Countdown before start
-            game_status = countdown(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, clock)
+            game_status = countdown(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, clock)
         elif game_status == SCENE_GAME_ONGOING: # Game ongoing
             ball.vx = ball_vx_straight
             game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, ball_vx_straight, game_status, clock)
         elif game_status == SCENE_GAME_END: # Game finished
-            game_status = game_end(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, clock)
+            game_status = game_end(WIN, l_pad, r_pad, ball, l_score, r_score, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, game_status, clock)
         elif game_status == SCENE_CALIBRATION: # Paddle/Gyroscopes calibration
-            game_status = calibrate_pads(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, clock)
+            game_status = calibrate_pads(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, clock)
             
 if __name__ == '__main__':
     main()
