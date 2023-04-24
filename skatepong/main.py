@@ -9,7 +9,7 @@ import math
 import random
 import time
 from mpu6050 import mpu6050
-from gyro import Gyro_one_axis
+from skatepong.gyro import Gyro_one_axis
 
 #------------------------------------------------------------------------------
 # DEVELOPMENT VARIABLES
