@@ -4,6 +4,9 @@
 # Ignore folder
 work
 
+# Ignore pycache
+skatepong/__pycache__
+
 # Ignore files related to API keys
 .env
 
