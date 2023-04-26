@@ -47,7 +47,7 @@ class Gyro_one_axis(mpu6050):
             gyro_sum += self.get_data()
             i += 1
         gyro_offset = gyro_sum / nb_calib_pts
-        print("Gyroscope average offset measured ("+ self.axis + " axis) :", str(round(gyro_offset,2)))
+        #print("Gyroscope average offset measured ("+ self.axis + " axis) :", str(round(gyro_offset,2)))
         self.offset = gyro_offset
         return gyro_offset
     
@@ -67,7 +67,7 @@ def main():
         print("Gyro 1 (" + gyro_1.axis + " axis) => Raw data :", str(round(gyro_1_raw,2)), "/ Calibrated data :", str(round(gyro_1_calibrated,2)))
         print("Gyro 2 (" + gyro_2.axis + " axis) => Raw data :", str(round(gyro_2_raw,2)), "/ Calibrated data :", str(round(gyro_2_calibrated,2)))
         print("-------------------------------")
-        #time.sleep(1)
+        time.sleep(1)
 
 
 if __name__ == '__main__':
