@@ -118,7 +118,7 @@ class Game():
         # - The ball is created in the center of the display
         pad_w, pad_h, ball_r, ball_vx_straight = self.compute_elements_sizes()
         l_pad_x =  int(self.win_w * self.PAD_X_OFFSET_RATIO)
-        r_pad_x = self.win_w - int(self.PAD_X_OFFSET_RATIO) * self.win_w - pad_w
+        r_pad_x = self.win_w - int(self.PAD_X_OFFSET_RATIO * self.win_w) - pad_w
         pad_y = (self.win_h - pad_h) // 2
         self.l_pad = skatepong.game_objects.Paddle(self.win, l_pad_x, pad_y, pad_w, pad_h, self.WHITE, self.l_gyro)
         self.r_pad = skatepong.game_objects.Paddle(self.win, r_pad_x, pad_y, pad_w, pad_h, self.WHITE, self.r_gyro)
@@ -510,6 +510,8 @@ class Game():
         1 point each time a player shoots the ball inside the oponent's zone.
         """
         
+        self.l_score = 0
+        self.r_score = 0
         goal_to_be = False
         random_number = random.randint(1, 2)
         

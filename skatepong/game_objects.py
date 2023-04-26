@@ -1,6 +1,7 @@
 #!usr/bin/python3
 
 import pygame
+from pygame.locals import *
 
 class Ball():
     
@@ -17,8 +18,8 @@ class Ball():
 
     def draw(self):
         pygame.draw.circle(self.win, self.color, (self.x, self.y), self.r)
-        #ball_obj = pygame.draw.circle(win, self.color, (self.x, self.y), self.r)
-        #ball_rect = ball_obj.pygame.get_rect()
+        #self.rect = pygame.draw.circle(self.win, self.color, (self.x, self.y), self.r)
+        #self.rect = ball_obj.get_rect()
         
     def move(self):
         self.x += self.vx
