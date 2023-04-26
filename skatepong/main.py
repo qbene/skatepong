@@ -4,12 +4,13 @@
 # IMPORTS
 #------------------------------------------------------------------------------
 
+import sys
 import pygame
 import math
 import random
 import time
 from mpu6050 import mpu6050
-from gyro import Gyro_one_axis
+from skatepong.gyro import Gyro_one_axis
 
 #------------------------------------------------------------------------------
 # DEVELOPMENT VARIABLES
@@ -21,6 +22,7 @@ DEV_MODE = True # Used to avoid full screen display mode during dev phase.
 # INITIALIZATION
 #------------------------------------------------------------------------------
 
+#PYGAME_BLEND_ALPHA_SDL2 = 1
 pygame.init()
 
 #------------------------------------------------------------------------------
@@ -34,11 +36,11 @@ VELOCITY_ANGLE_FACTOR = 2 # Allows to increase ball velocity when angle (longer 
 # Delays
 DELAY_INACT_PLAYER = 5 # Delay after which a player is considered inactive (s)
 DELAY_COUNTDOWN = 3 # Countdown initial time before starting the game (s)
-DELAY_GAME_END = 5 # Delay after game ends (s)
+DELAY_GAME_END = 60 # Delay after game ends (s)
 DELAY_BEF_PAD_CALIB = 10 # Delay before paddles calibration starts (s)
 DELAY_AFT_PAD_CALIB = 10 # Delay after paddles calibration is done (s)
 # Technical parameters
-FPS = 60 # Max number of frames per second
+FPS = 30 # Max number of frames per second
 GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_500DEG
 """Possible values:
 mpu6050.GYRO_RANGE_250DEG
@@ -130,7 +132,7 @@ class Paddle:
                 vy = 30
             else:
                 vy = 5
-            print("Gyro (" + self.gyro.axis + " axis) => Raw data :", str(round(gyro_raw,2)), "/ Calibrated data :", str(round(gyro_calib,2)))
+            #print("Gyro (" + self.gyro.axis + " axis) => Raw data :", str(round(gyro_raw,2)), "/ Calibrated data :", str(round(gyro_calib,2)))
         return vy
 
     def move(self, win_h):
@@ -885,6 +887,7 @@ def main():
         elif game_status == SCENE_COUNTDOWN: # Countdown before start
             game_status = countdown(WIN, win_w, win_h, l_pad, r_pad, l_gyro, r_gyro, ball, l_score, r_score, game_status, clock)
         elif game_status == SCENE_GAME_ONGOING: # Game ongoing
+            print ("START GAME")
             ball.vx = ball_vx_straight
             game_status, l_score, r_score = game_ongoing(WIN, l_pad, r_pad, ball, win_w, win_h, MID_LINE_HEIGHT_RATIO, l_gyro, r_gyro, ball_vx_straight, game_status, clock)
         elif game_status == SCENE_GAME_END: # Game finished

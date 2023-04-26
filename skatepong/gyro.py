@@ -67,7 +67,7 @@ def main():
         print("Gyro 1 (" + gyro_1.axis + " axis) => Raw data :", str(round(gyro_1_raw,2)), "/ Calibrated data :", str(round(gyro_1_calibrated,2)))
         print("Gyro 2 (" + gyro_2.axis + " axis) => Raw data :", str(round(gyro_2_raw,2)), "/ Calibrated data :", str(round(gyro_2_calibrated,2)))
         print("-------------------------------")
-        time.sleep(1)
+        #time.sleep(1)
 
 
 if __name__ == '__main__':
