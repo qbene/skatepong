@@ -10,3 +10,6 @@ work
 # Ignore virtual environment files
 .venv
 
+# Ignore pycache
+skatepong/__pycache__
+
