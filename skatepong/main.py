@@ -112,7 +112,7 @@ def main():
             game.game_ongoing()
         elif game.game_status == SCENE_GAME_END: # Game finished
             game.game_end()
-        elif game_status == SCENE_CALIBRATION: # Paddle/Gyroscopes calibration
+        elif game.game_status == SCENE_CALIBRATION: # Paddle/Gyroscopes calibration
             game.calibrate_pads()
        
 if __name__ == '__main__':

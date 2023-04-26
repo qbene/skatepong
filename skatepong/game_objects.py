@@ -5,7 +5,6 @@ from pygame.locals import *
 
 class Ball():
     
-
     def __init__(self, win, x, y, r, color, vx_straight, vx = 0, vy = 0):
         self.win = win
         #self.x = self.original_x = x # Ball center - horizontal axis
@@ -39,9 +38,12 @@ class Ball():
         self.vy = self.original_vy
         
 class Paddle():
+
+    #VY_PAD_RATIO = 0.02 # Ratio that defines minimum paddle vertical displacement (in comparison with windows height)
     
-    def __init__(self, win, x, y, w, h, color, gyro):
+    def __init__(self, win, win_h, x, y, w, h, color, gyro):
         self.win = win
+        self.win_h = win_h
         self.x = self.original_x = x # Top left hand corner - horizontal axis
         self.y = self.original_y = y # Top left hand corner - vertical axis
         self.w = w # Paddle width (in pixels)
@@ -56,6 +58,8 @@ class Paddle():
 
     def compute_pad_velocity(self):
         
+        vy_factor = 0.5 # Factor to adjust pad vertical velocity [between 0.5 and 1]
+        
         # Handling gyroscope i2c deconnection
         try:
             gyro_raw = self.gyro.get_data()
@@ -69,22 +73,27 @@ class Paddle():
             self.gyro.ready_for_reinit = True
             #gyro_raw = self.gyro.get_data()
             gyro_calib = gyro_raw - self.gyro.offset
+            """
             if gyro_calib < -200:
-                vy = -30
-            elif  (gyro_calib >= -200 and gyro_calib < -50):
-                vy = -20
+                vy_factor = -20
+            elif  (gyro_calib >= -200 and gyro_calib < -100):
+                vy_factor = -2
             elif (gyro_calib >= -50 and gyro_calib < -10): 
-                vy = -10    
+                vy_factor = -1  
             elif (gyro_calib >= -10 and gyro_calib < 10):
-                vy = 0
+                vy_factor = 0
             elif (gyro_calib >= 10 and gyro_calib < 50):
-                vy = 10
+                vy_factor = 1
             elif (gyro_calib >= 50 and gyro_calib < 200):
-                vy = 20
+                vy_factor = 2
             elif gyro_calib >= 200:
-                vy = 30
+                vy_factor = 3
             else:
-                vy = 5
+                vy = 0
+            """
+            #vy_factor = gyro_calib / self.gyro.numerical_sensitivity  
+            #vy = int(vy_factor * self.VY_PAD_RATIO * self.win_h)     
+            vy = int(gyro_calib / self.gyro.numerical_sensitivity * self.win_h) * vy_factor
             #print("Gyro (" + self.gyro.axis + " axis) => Raw data :", str(round(gyro_raw,2)), "/ Calibrated data :", str(round(gyro_calib,2)))
         return vy
 

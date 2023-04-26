@@ -120,8 +120,8 @@ class Game():
         l_pad_x =  int(self.win_w * self.PAD_X_OFFSET_RATIO)
         r_pad_x = self.win_w - int(self.PAD_X_OFFSET_RATIO * self.win_w) - pad_w
         pad_y = (self.win_h - pad_h) // 2
-        self.l_pad = skatepong.game_objects.Paddle(self.win, l_pad_x, pad_y, pad_w, pad_h, self.WHITE, self.l_gyro)
-        self.r_pad = skatepong.game_objects.Paddle(self.win, r_pad_x, pad_y, pad_w, pad_h, self.WHITE, self.r_gyro)
+        self.l_pad = skatepong.game_objects.Paddle(self.win, self.win_h, l_pad_x, pad_y, pad_w, pad_h, self.WHITE, self.l_gyro)
+        self.r_pad = skatepong.game_objects.Paddle(self.win, self.win_h, r_pad_x, pad_y, pad_w, pad_h, self.WHITE, self.r_gyro)
         self.ball = skatepong.game_objects.Ball(self.win, self.win_w // 2, self.win_h // 2, ball_r, self.WHITE, ball_vx_straight, 0, 0)
 
     def reinitialize_gyro_if_needed(self):
@@ -484,7 +484,7 @@ class Game():
             # Closing game window if red cross clicked or ESCAPE pressed:
             keys = pygame.key.get_pressed()
             #check_exit_game(keys)
-            self.game_status = self.check_user_inputs(keys)
+            self.check_user_inputs(keys)
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
 
@@ -525,7 +525,7 @@ class Game():
             self.clock.tick(self.FPS)
             # Closing game window if red cross clicked or ESCAPE pressed:
             keys = pygame.key.get_pressed()
-            self.game_status = self.check_user_inputs(keys)
+            self.check_user_inputs(keys)
             
             # Going to paddles calibration scene upon user request:
             if self.game_status == self.SCENE_CALIBRATION  or self.game_status == self.SCENE_WAITING_PLAYERS:
@@ -571,7 +571,7 @@ class Game():
 
             # Closing game window if red cross clicked or ESCAPE pressed:
             keys = pygame.key.get_pressed()
-            self.game_status = self.check_user_inputs(keys)
+            self.check_user_inputs(keys)
             #check_exit_game(keys)
 
             # Reinitializing gyro if necessary (after i2c deconnection)
@@ -611,7 +611,7 @@ class Game():
             # Closing game window if red cross clicked or ESCAPE pressed:
             keys = pygame.key.get_pressed()
             #check_exit_game(keys)
-            self.game_status = self.check_user_inputs(keys)
+            self.check_user_inputs(keys)
 
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
@@ -658,15 +658,15 @@ class Game():
             # Closing game window if red cross clicked or ESCAPE pressed:
             keys = pygame.key.get_pressed()
             #check_exit_game(keys)
-            self.game_status = self.check_user_inputs(keys)
+            self.check_user_inputs(keys)
 
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
 
             time_before_start = self.DELAY_AFT_PAD_CALIB - int(current_time - start_time)
 
-            vy_l_pad = self.l_pad.move(win_h)
-            vy_r_pad = self.r_pad.move(win_h)
+            vy_l_pad = self.l_pad.move(self.win_h)
+            vy_r_pad = self.r_pad.move(self.win_h)
             
             # Managing display:
             self.win.fill(self.BLACK)

@@ -15,11 +15,12 @@ class Gyro_one_axis(mpu6050):
         """        
         self.sensitivity = sensitivity
         """For sensitivity, use one of the following constants:
-        mpu6050.GYRO_RANGE_250DEG
-        mpu6050.GYRO_RANGE_500DEG
-        mpu6050.GYRO_RANGE_1000DEG
-        mpu6050.GYRO_RANGE_2000DEG
+        mpu6050.GYRO_RANGE_250DEG => 0x00
+        mpu6050.GYRO_RANGE_500DEG => 0x08
+        mpu6050.GYRO_RANGE_1000DEG => 0x10
+        mpu6050.GYRO_RANGE_2000DEG => 0x18
         """
+        self.get_numerical_sensitivity()
         self.offset = 0
         self.error = False
         self.ready_for_reinit = False
@@ -32,8 +33,17 @@ class Gyro_one_axis(mpu6050):
         gyro_data = self.get_gyro_data()[self.axis]
 
         return gyro_data
-
     
+    def get_numerical_sensitivity(self):
+        if self.sensitivity == 0x00:
+            self.numerical_sensitivity = 250
+        elif self.sensitivity == 0x08:
+            self.numerical_sensitivity = 500
+        elif self.sensitivity == 0x10:
+            self.numerical_sensitivity = 1000
+        elif self.sensitivity == 0x18:
+            self.numerical_sensitivity = 2000
+
     def measure_gyro_offset(self, nb_calib_pts = 500):
         """
         Calculates the average offset given by the gyroscope on the chosen axis.
@@ -54,9 +64,12 @@ class Gyro_one_axis(mpu6050):
 def main():
     gyro_1 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', mpu6050.GYRO_RANGE_500DEG)
     gyro_2 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', mpu6050.GYRO_RANGE_500DEG)
+
     print("Gyroscope 1 :")
+    print("Sensitivity:", str(gyro_1.numerical_sensitivity), "deg/s")
     gyro_1_offset = gyro_1.measure_gyro_offset(500)
     print("Gyroscope 2 :")
+    print("Sensitivity:", str(gyro_2.numerical_sensitivity), "deg/s")
     gyro_2_offset = gyro_2.measure_gyro_offset(500)
     
     while True:
@@ -67,7 +80,7 @@ def main():
         print("Gyro 1 (" + gyro_1.axis + " axis) => Raw data :", str(round(gyro_1_raw,2)), "/ Calibrated data :", str(round(gyro_1_calibrated,2)))
         print("Gyro 2 (" + gyro_2.axis + " axis) => Raw data :", str(round(gyro_2_raw,2)), "/ Calibrated data :", str(round(gyro_2_calibrated,2)))
         print("-------------------------------")
-        time.sleep(1)
+        time.sleep(1/20)
 
 
 if __name__ == '__main__':
