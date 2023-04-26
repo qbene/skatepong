@@ -174,13 +174,16 @@ class Game():
         """
         Handles when goals are scored, and updates scores.
         """
-        if self.ball.x < 0:
+        goal = False
+        if self.ball.rect.left < 0:
             self.r_score += 1
             vx_direction_after_goal = 1
-        elif self.ball.x > self.win_w:
+            goal = True
+        elif self.ball.rect.right > self.win_w:
             self.l_score += 1
             vx_direction_after_goal = -1
-        if self.ball.x < 0 or self.ball.x > self.win_w:
+            goal = True
+        if goal == True:
             self.ball.reset()
             self.ball.vx = self.ball.vx_straight * vx_direction_after_goal
             goal_to_be = False
@@ -190,21 +193,20 @@ class Game():
     def handle_top_bottom_collision(self):
         """ Collision with top or bottom wall"""
         # Bottom wall
-        if (self.ball.y + self.ball.r >= self.win_h):
+        if (self.ball.rect.bottom >= self.win_h):
             y_mod = self.win_h - self.ball.r  
         # Top wall
-        elif (self.ball.y - self.ball.r <= 0):
+        elif (self.ball.rect.top <= 0):
             y_mod = self.ball.r
-        x_mod = int(self.ball.x - ((self.ball.vx * (self.ball.y - y_mod)) / self.ball.vy))
-        self.ball.x = x_mod
-        self.ball.y = y_mod 
+        x_mod = int(self.ball.rect.centerx - ((self.ball.vx * (self.ball.rect.centery - y_mod)) / self.ball.vy))
+        self.ball.rect.center = (x_mod, y_mod)
         self.ball.vy *= -1
         
     def handle_left_collision(self, goal_to_be):
         #goal_to_be = False
-        if self.ball.x - self.ball.r <= self.l_pad.rect.right:
+        if self.ball.rect.left <= self.l_pad.rect.right:
             x_mod = self.l_pad.rect.right + self.ball.r
-            y_mod = int(self.ball.y - (self.ball.x - x_mod) * self.ball.vy / self.ball.vx)            
+            y_mod = int(self.ball.rect.centery - (self.ball.rect.centerx - x_mod) * self.ball.vy / self.ball.vx)            
             # If ball colliding with paddle:
             if y_mod >= self.l_pad.rect.top and y_mod <= self.l_pad.rect.bottom:            
                 y_pad_mid = self.l_pad.rect.centery
@@ -221,17 +223,16 @@ class Game():
                     vy = round(math.sin(math.radians(angle)) * self.ball.vx_straight) * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                    
                     self.ball.vy = vy
                     self.ball.vx = vx
-                self.ball.x = x_mod
-                self.ball.y = y_mod
+                self.ball.rect.center = (x_mod, y_mod)
             else:
                 goal_to_be = True
         return goal_to_be
 
     def handle_right_collision(self, goal_to_be):
         #goal_to_be = False
-        if self.ball.x + self.ball.r >= self.r_pad.rect.left:
+        if self.ball.rect.right >= self.r_pad.rect.left:
             x_mod = self.r_pad.rect.left - self.ball.r
-            y_mod = int(self.ball.y - (self.ball.x - x_mod) * self.ball.vy / self.ball.vx)            
+            y_mod = int(self.ball.rect.centery - (self.ball.rect.centerx - x_mod) * self.ball.vy / self.ball.vx)            
             # If ball colliding with paddle:
             if y_mod >= self.r_pad.rect.top and y_mod <= self.r_pad.rect.bottom:            
                 y_pad_mid = self.r_pad.rect.centery
@@ -249,8 +250,7 @@ class Game():
                     vy = round(math.sin(math.radians(angle)) * self.ball.vx_straight) * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                    
                     self.ball.vy = vy
                     self.ball.vx = -vx
-                self.ball.x = x_mod
-                self.ball.y = y_mod
+                self.ball.rect.center = (x_mod, y_mod)
             else:
                 goal_to_be = True
         return goal_to_be
@@ -261,13 +261,13 @@ class Game():
         top_collision = False
         left_collision = False
         right_collision = False
-        if (self.ball.y + self.ball.r >= self.win_h):
+        if (self.ball.rect.bottom >= self.win_h):
             bottom_collision = True
-        elif (self.ball.y - self.ball.r <= 0):
+        elif (self.ball.rect.top <= 0):
             top_collision = True
-        if ((self.ball.vx < 0) and (self.ball.x - self.ball.r <= self.l_pad.rect.right)):
+        if ((self.ball.vx < 0) and (self.ball.rect.left <= self.l_pad.rect.right)):
             left_collision = True
-        elif ((self.ball.vx > 0) and (self.ball.x + self.ball.r >= self.r_pad.rect.left)):
+        elif ((self.ball.vx > 0) and (self.ball.rect.right >= self.r_pad.rect.left)):
             right_collision = True
                 
         return bottom_collision, top_collision, left_collision, right_collision
@@ -293,7 +293,7 @@ class Game():
                 y_mod = self.ball.r
             # Neef to determine which collision would arrive first: top/bottom wall or left paddle ?
             if bottom_collision or top_collision:
-                x_mod = int(self.ball.x - ((self.ball.vx * (self.ball.y - y_mod)) / self.ball.vy))
+                x_mod = int(self.ball.rect.centerx - ((self.ball.vx * (self.ball.rect.centery - y_mod)) / self.ball.vy))
                 # Top/bottom wall collision first :
                 if x_mod > (self.l_pad.rect.right):
                     self.handle_top_bottom_collision(self.ball, self.win_h)
@@ -317,7 +317,7 @@ class Game():
                 y_mod = self.ball.r
             # Neef to determine which collision would arrive first: top/bottom wall or right paddle ?
             if bottom_collision or top_collision:
-                x_mod = int(self.ball.x - ((self.ball.vx * (self.ball.y - y_mod)) / self.ball.vy))
+                x_mod = int(self.ball.rect.centerx - ((self.ball.vx * (self.ball.rect.centery - y_mod)) / self.ball.vy))
                 # Top/bottom wall collision first :
                 if x_mod < self.r_pad.x:
                     handle_top_bottom_collision(ball, win_h)

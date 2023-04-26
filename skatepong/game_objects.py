@@ -8,26 +8,33 @@ class Ball():
 
     def __init__(self, win, x, y, r, color, vx_straight, vx = 0, vy = 0):
         self.win = win
-        self.x = self.original_x = x # Ball center - horizontal axis
-        self.y = self.original_y = y # Ball center - vertical axis
+        #self.x = self.original_x = x # Ball center - horizontal axis
+        #self.y = self.original_y = y # Ball center - vertical axis
+        self.original_x = x
+        self.original_y = y
         self.color = color
         self.r = r # Ball radius (px)
         self.vx_straight = vx_straight # Ball velocity when going horizontally (px)
         self.vx = self.original_vx = vx # Ball velocity - horizontal axis (px)
         self.vy = self.original_vy = vy # Ball velocity - vertical axis (px)
+        self.rect = pygame.Rect(x - r, y - r, 2 * r, 2 * r) 
 
     def draw(self):
-        pygame.draw.circle(self.win, self.color, (self.x, self.y), self.r)
+        pygame.draw.circle(self.win, self.color, self.rect.center, self.r)
+        #pygame.draw.circle(self.win, self.color, (self.x, self.y), self.r)
         #self.rect = pygame.draw.circle(self.win, self.color, (self.x, self.y), self.r)
         #self.rect = ball_obj.get_rect()
         
     def move(self):
-        self.x += self.vx
-        self.y += self.vy
+        #self.x += self.vx
+        #self.y += self.vy
+        self.rect.centerx += self.vx
+        self.rect.centery += self.vy
     
     def reset(self):
-        self.x = self.original_x
-        self.y = self.original_y
+        #self.x = self.original_x
+        #self.y = self.original_y
+        self.rect.center = (self.original_x, self.original_y)
         self.vx = self.original_vx
         self.vy = self.original_vy
         
