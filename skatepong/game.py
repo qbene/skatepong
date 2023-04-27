@@ -283,8 +283,8 @@ class Game():
             x_mod = self.l_pad.rect.right + self.ball.r
             y_mod = int(self.ball.rect.centery - (self.ball.rect.centerx - x_mod) * self.ball.vy / self.ball.vx)            
             # If ball colliding with paddle:
-            if (y_mod >= self.l_pad.rect.top \
-            and y_mod <= self.l_pad.rect.bottom):            
+            if (y_mod + self.ball.r >= self.l_pad.rect.top \
+            and y_mod - self.ball.r <= self.l_pad.rect.bottom):            
                 y_pad_mid = self.l_pad.rect.centery
                 # Bounce angle calculation
                 if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w)\
@@ -315,8 +315,8 @@ class Game():
             x_mod = self.r_pad.rect.left - self.ball.r
             y_mod = int(self.ball.rect.centery - (self.ball.rect.centerx - x_mod) * self.ball.vy / self.ball.vx)            
             # If ball colliding with paddle:
-            if y_mod >= self.r_pad.rect.top \
-            and y_mod <= self.r_pad.rect.bottom:            
+            if y_mod + self.ball.r >= self.r_pad.rect.top \
+            and y_mod - self.ball.r <= self.r_pad.rect.bottom:            
                 y_pad_mid = self.r_pad.rect.centery
                 # Bounce angle calculation
                 if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w) \
@@ -385,7 +385,7 @@ class Game():
                      (self.ball.rect.centery - y_mod)) / self.ball.vy))
                 # Top/bottom wall collision first :
                 if x_mod > (self.l_pad.rect.right):
-                    self.handle_walls_coll(self.ball, self.win_h)
+                    self.handle_walls_coll()
                 # Left padlle collision first if paddle well positioned
                 else:
                     goal_to_be = self.handle_l_coll(goal_to_be)
@@ -411,7 +411,7 @@ class Game():
                      (self.ball.rect.centery - y_mod)) / self.ball.vy))
                 # Top/bottom wall collision first :
                 if x_mod < self.r_pad.x:
-                    self.handle_walls_coll(ball, win_h)
+                    self.handle_walls_coll()
                # Right padlle collision first if paddle well positioned
                 else:        
                     goal_to_be = self.handle_r_coll(goal_to_be)
