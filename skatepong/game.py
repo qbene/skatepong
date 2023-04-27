@@ -108,6 +108,7 @@ class Game():
         self.full_screen = full_screen
         self.win, self.win_w, self.win_h = self.create_window()
         self.comp_font_sizes()
+        self.comp_common_coordinates()
         
     #-------------------------------------------------------------------
     # SIDE FUNCTIONS
@@ -135,6 +136,17 @@ class Game():
         self.ft_0_1 = int(0.1 * self.win_h)
         self.ft_0_15 = int(0.15 * self.win_h)
         self.ft_0_2 = int(0.2 * self.win_h)
+        
+    def comp_common_coordinates(self):
+        """
+        Computes commonly used coordinates to position elements
+        """
+        self.x_1_2 = self.win_w // 2
+        self.x_1_4 = self.win_w // 4
+        self.x_3_4 = (self.win_w * 3) // 4
+        self.y_1_2 = self.win_h // 2
+        self.y_1_4 = self.win_h // 4
+        self.y_3_4 = (self.win_h * 3) // 4
 
     def comp_elem_sizes(self):
         """
@@ -162,9 +174,8 @@ class Game():
                      pad_y, pad_w, pad_h, self.WHITE, self.l_gyro)
         self.r_pad = skt_obj.Paddle(self.win, self.win_h, r_pad_x, \
                      pad_y, pad_w, pad_h, self.WHITE, self.r_gyro)
-        self.ball = skt_obj.Ball(self.win, self.win_w // 2, \
-                    self.win_h // 2, ball_r, self.WHITE, \
-                    ball_vx_straight, 0, 0)
+        self.ball = skt_obj.Ball(self.win, self.x_1_2, self.y_1_2, \
+                    ball_r, self.WHITE, ball_vx_straight, 0, 0)
 
     def reinitialize_gyro_if_needed(self):
         """
@@ -193,16 +204,13 @@ class Game():
         """
         if draw_scores == True:
             font_nm = self.FONT_NAME
-            font_sz = int(self.FONT_RATIO_0_1 * self.win_h)
-            txt_l = str(self.l_score)
-            txt_r = str(self.r_score)
-            x_l = self.win_w // 4
-            x_r = (self.win_w * 3) // 4
-            y = int(self.FONT_RATIO_0_1 * self.win_h)
-            skt_tls.draw_text(self.win, font_nm, font_sz, txt_l, \
-                              x_l, y, self.WHITE)
-            skt_tls.draw_text(self.win, font_nm, font_sz, txt_r, \
-                              x_r, y, self.WHITE)
+            y = int(self.FONT_RATIO_0_1 * self.win_h) # 1 font sz offset
+            txt = str(self.l_score)
+            skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, \
+                  self.x_1_4, y, self.WHITE)
+            txt = str(self.r_score)
+            skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, \
+                              self.x_3_4, y, self.WHITE)
         if draw_line == True:        
             thick = int(self.win_w * self.MID_LINE_WIDTH_RATIO)
             horiz_w_factor = self.CENTER_CROSS_MULTIPLIER
@@ -429,14 +437,13 @@ class Game():
         
         # Managing display:
         self.win.fill(self.BLACK)
-        x = self.win_w // 2
-        y = self.win_h // 2
         r = int(self.WELCOME_RADIUS_RATIO * self.win_h)
-        pygame.draw.circle(self.win, self.WHITE, (x, y), r)
+        pygame.draw.circle(self.win, self.WHITE, \
+                          (self.x_1_2, self.y_1_2), r)
         font_nm = self.FONT_NAME
         txt = "SKATEPONG"
-        skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, x, y, \
-                          self.BLACK)
+        skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, \
+                          self.x_1_2, self.y_1_2, self.BLACK)
         pygame.display.update()
         
         while current_time - start_time < self.DELAY_WELCOME: 
@@ -482,10 +489,8 @@ class Game():
                 else:
                     msg = "Please connect skateboards"
                 font_nm = self.FONT_NAME
-                x = self.win_w // 2
-                y = self.win_h // 2
-                skt_tls.draw_text(self.win, font_nm, self.ft_0_1, \
-                                  msg, x, y, self.WHITE)
+                skt_tls.draw_text(self.win, font_nm, self.ft_0_1, msg, \
+                                  self.x_1_2, self.y_1_2, self.WHITE)
                 pygame.display.update()
         
         self.l_gyro = l_gyro
@@ -530,15 +535,11 @@ class Game():
             # Managing display:
             self.win.fill(self.BLACK)
             font_nm = self.FONT_NAME
-            x1 = self.win_w // 2
-            y1 = self.win_h // 4
-            x2 = self.win_w // 2
-            y2 = (self.win_h * 3) // 4
-            txt = "MOVE SKATES TO START"
             skt_tls.draw_text(self.win, font_nm, self.ft_0_1, msg, \
-                              x1, y1, self.WHITE)
+                              self.x_1_2, self.y_1_4, self.WHITE)
+            txt = "MOVE SKATES TO START"
             skt_tls.draw_text(self.win, font_nm, self.ft_0_05, txt, \
-                              x2, y2, self.WHITE)
+                              self.x_1_2, self.y_3_4, self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = True, \
                                 draw_scores = False, draw_line = False)
             pygame.display.update()
@@ -590,10 +591,8 @@ class Game():
             self.win.fill(self.BLACK)
             font_nm = self.FONT_NAME
             txt = str(time_before_start)
-            x = self.win_w // 2
-            y = self.win_h // 4
             skt_tls.draw_text(self.win, font_nm, self.ft_0_2, txt, 
-                              x, y, self.WHITE)
+                              self.x_1_2, self.y_1_4, self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = True, \
                                 draw_scores = False, draw_line = False)
             pygame.display.update()
@@ -618,7 +617,8 @@ class Game():
         else:
             self.ball.vx =  -self.ball.vx_straight # To the left
             
-        while (self.l_score < self.WINNING_SCORE and self.r_score < self.WINNING_SCORE):
+        while self.l_score < self.WINNING_SCORE \
+        and self.r_score < self.WINNING_SCORE:
 
             self.clock.tick(self.FPS)
             # Checking requests for closing / calibrating / restarting:
@@ -683,12 +683,10 @@ class Game():
             # Managing display:
             self.win.fill(self.BLACK)
             font_nm = self.FONT_NAME
-            x = self.win_w // 2
-            y = self.win_h // 2
             self.draw_game_objects(draw_pads = True, draw_ball = False,\
                                   draw_scores = True, draw_line = False)
             skt_tls.draw_text(self.win, font_nm, self.ft_0_15, msg, \
-                              x, y, self.WHITE)
+                              self.x_1_2, self.y_1_2, self.WHITE)
             pygame.display.update()
 
             current_time = time.time()
@@ -729,20 +727,14 @@ class Game():
             # Managing display:
             self.win.fill(self.BLACK)
             txt = "CALIBRATION IS ABOUT TO START"
-            x = self.win_w // 2
-            y = self.win_h // 4
             skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_1, \
-                              txt, x, y, self.WHITE)
-            txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"
-            x = self.win_w // 2
-            y = (self.win_h * 3) // 4                     
+                              txt, self.x_1_2, self.y_1_4, self.WHITE)
+            txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"                    
             skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_05, \
-                              txt, x, y, self.WHITE)
-            txt = str(time_before_start)
-            x = self.win_w // 2
-            y = self.win_h // 2               
+                              txt, self.x_1_2, self.y_3_4, self.WHITE)
+            txt = str(time_before_start)         
             skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_2, \
-                              txt, x, y, self.WHITE)
+                              txt, self.x_1_2, self.y_1_2, self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = False,\
                                 draw_scores = False, draw_line = False)
             pygame.display.update()
@@ -755,15 +747,11 @@ class Game():
         self.win.fill(self.BLACK)
         
         txt = "CALIBRATION ONGOING..."
-        x = self.win_w // 2
-        y = self.win_h // 4
         skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_1, \
-                          txt, x, y, self.WHITE)
-        txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"
-        x = self.win_w // 2
-        y = (self.win_h * 3) // 4                     
+                          txt, self.x_1_2, self.y_1_4, self.WHITE)
+        txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"                  
         skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_05, \
-                          txt, x, y, self.WHITE)
+                          txt, self.x_1_2, self.y_3_4, self.WHITE)
         self.draw_game_objects(draw_pads = True, draw_ball = False, \
                               draw_scores = False, draw_line = False)
         pygame.display.update()
@@ -799,20 +787,14 @@ class Game():
             # Managing display:
             self.win.fill(self.BLACK)
             txt = "CALIBRATION DONE"
-            x = self.win_w // 2
-            y = self.win_h // 4
             skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_1, \
-                              txt, x, y, self.WHITE)
-            txt = "MOVE SKATES TO TEST CALIBRATION"
-            x = self.win_w // 2
-            y = (self.win_h * 3) // 4                     
+                              txt, self.x_1_2, self.y_1_4, self.WHITE)
+            txt = "MOVE SKATES TO TEST CALIBRATION"            
             skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_05, \
-                              txt, x, y, self.WHITE)
-            txt = str(time_before_start)
-            x = self.win_w // 2
-            y = self.win_h // 2               
+                              txt, self.x_1_2, self.y_3_4, self.WHITE)
+            txt = str(time_before_start)   
             skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_2, \
-                              txt, x, y, self.WHITE)
+                              txt, self.x_1_2, self.y_1_2, self.WHITE)
             
             self.draw_game_objects(draw_pads = True, draw_ball = False,\
                                 draw_scores = False, draw_line = False)
