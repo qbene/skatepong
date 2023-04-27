@@ -45,7 +45,7 @@ class Game():
     # Main game parameters 
     WINNING_SCORE = 3 # Number of goals to win the game
     BALL_ANGLE_MAX = 60 # Max angle after paddle collision (deg) [30-75]
-    VELOCITY_ANGLE_FACTOR = 2 # Higher ball velocity when angle [2 - 3]
+    VELOCITY_ANGLE_FACTOR = 2.5 # Higher ball velocity when angle [2 - 3]
     # Delays
     DELAY_WELCOME = 3 # Splash screen duration (s)
     DELAY_INACT_PLAYER = 5 # Delay before a player becomes inactive (s)
@@ -120,11 +120,16 @@ class Game():
         """
         disp_w = pygame.display.Info().current_w # Disp. width (px)
         disp_h = pygame.display.Info().current_h # Disp. height (px)
+        # Resolution limitation to avoid lags with resolution 1920x1080
+        if disp_w == 1920 and disp_h == 1080:
+            disp_w = 1280
+            disp_h = 720
         if self.full_screen == False:
             win = pygame.display.set_mode([disp_w, disp_h - 100])
             pygame.display.set_caption("Skatepong")         
         else:
-            win = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
+            #win = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
+            win = pygame.display.set_mode([disp_w, disp_h], pygame.FULLSCREEN)
         win_w , win_h = pygame.display.get_surface().get_size()
         return win, win_w, win_h
         
@@ -406,7 +411,7 @@ class Game():
                      (self.ball.rect.centery - y_mod)) / self.ball.vy))
                 # Top/bottom wall collision first :
                 if x_mod < self.r_pad.x:
-                    handle_walls_coll(ball, win_h)
+                    self.handle_walls_coll(ball, win_h)
                # Right padlle collision first if paddle well positioned
                 else:        
                     goal_to_be = self.handle_r_coll(goal_to_be)
