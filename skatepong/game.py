@@ -1,5 +1,9 @@
 #!usr/bin/python3
 
+#-----------------------------------------------------------------------
+# IMPORTS
+#-----------------------------------------------------------------------
+
 import pygame
 import time
 import math
@@ -10,11 +14,15 @@ import skatepong.gyro
 import skatepong.tools
 import skatepong.game_objects
 
+#-----------------------------------------------------------------------
+# CODE
+#-----------------------------------------------------------------------
+
 class Game():
 
-    #------------------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # GAME PARAMETERS
-    #------------------------------------------------------------------------------
+    #-------------------------------------------------------------------
     
     WINNING_SCORE = 3 # Number of goals to win the game
     BALL_ANGLE_MAX = 60 # Max angle after paddle collision (degrees) [30-75]
@@ -53,9 +61,9 @@ class Game():
     FONT_RATIO_0_15 = 0.15 # Ratio to screen height
     FONT_RATIO_0_2 = 0.2 # Ratio to screen height
 
-    #------------------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # CONSTANTS
-    #------------------------------------------------------------------------------
+    #-------------------------------------------------------------------
 
     # Game scenes (used to navigate between one another) :
     SCENE_WELCOME = 0
@@ -71,19 +79,18 @@ class Game():
     BLACK = (0, 0, 0)
     GREY = (127, 127, 127)    
 
-    def __init__(self, game_status = 0, l_score = 0, r_score = 0, dev_mode = False):
-        #self.clock = clock
+    def __init__(self, game_status = 0, l_score = 0, r_score = 0, full_screen = True):
         pygame.init()
         self.clock = pygame.time.Clock()
         self.game_status = game_status
         self.l_score = l_score
         self.r_score = r_score
-        self.dev_mode = dev_mode
+        self.full_screen = full_screen
         self.win, self.win_w, self.win_h = self.create_window()
 
-    #------------------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # SIDE FUNCTIONS
-    #------------------------------------------------------------------------------
+    #-------------------------------------------------------------------
         
     def create_window(self):
         """
@@ -91,8 +98,8 @@ class Game():
         """
         disp_w = pygame.display.Info().current_w # Display width (in pixels)
         disp_h = pygame.display.Info().current_h # Display height (in pixels)
-        if self.dev_mode == True:
-            win = pygame.display.set_mode([disp_w, disp_h-100])
+        if self.full_screen == False:
+            win = pygame.display.set_mode([disp_w, disp_h - 100])
             pygame.display.set_caption("Skatepong")         
         else:
             win = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
