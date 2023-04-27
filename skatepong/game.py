@@ -47,6 +47,7 @@ class Game():
     BALL_ANGLE_MAX = 60 # Max angle after paddle collision (deg) [30-75]
     VELOCITY_ANGLE_FACTOR = 2 # Higher ball velocity when angle [2 - 3]
     # Delays
+    DELAY_WELCOME = 3 # Splash screen duration (s)
     DELAY_INACT_PLAYER = 5 # Delay before a player becomes inactive (s)
     DELAY_COUNTDOWN = 3 # Countdown before game starts (s)
     DELAY_GAME_END = 5 # Delay after game ends (s)
@@ -106,7 +107,8 @@ class Game():
         self.r_score = r_score
         self.full_screen = full_screen
         self.win, self.win_w, self.win_h = self.create_window()
-
+        self.comp_font_sizes()
+        
     #-------------------------------------------------------------------
     # SIDE FUNCTIONS
     #-------------------------------------------------------------------
@@ -124,6 +126,15 @@ class Game():
             win = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
         win_w , win_h = pygame.display.get_surface().get_size()
         return win, win_w, win_h
+        
+    def comp_font_sizes(self):
+        """
+        Computes different font sizes.
+        """
+        self.ft_0_05 = int(0.05 * self.win_h)
+        self.ft_0_1 = int(0.1 * self.win_h)
+        self.ft_0_15 = int(0.15 * self.win_h)
+        self.ft_0_2 = int(0.2 * self.win_h)
 
     def comp_elem_sizes(self):
         """
@@ -237,7 +248,7 @@ class Game():
 
         return goal_to_be
 
-    def handle_top_bottom_collision(self):
+    def handle_walls_coll(self):
         """
         Handles collision between ball and top or bottom walls.
         """
@@ -251,7 +262,7 @@ class Game():
         self.ball.rect.center = (x_mod, y_mod)
         self.ball.vy *= -1
         
-    def handle_left_collision(self, goal_to_be):
+    def handle_l_coll(self, goal_to_be):
         """
         Handles collision between ball and left paddle.
         """
@@ -283,7 +294,7 @@ class Game():
                 goal_to_be = True
         return goal_to_be
 
-    def handle_right_collision(self, goal_to_be):
+    def handle_r_coll(self, goal_to_be):
         """
         Handles collision between ball and right paddle.
         """
@@ -355,21 +366,23 @@ class Game():
             # Ball also colliding with top wall
             elif top_coll:
                 y_mod = self.ball.r
-            # Neef to determine which collision would arrive first: top/bottom wall or left paddle ?
+            # Which collision first: top/bottom wall or left paddle ?
             if bot_coll or top_coll:
-                x_mod = int(self.ball.rect.centerx - ((self.ball.vx * (self.ball.rect.centery - y_mod)) / self.ball.vy))
+                x_mod = int(self.ball.rect.centerx - ((self.ball.vx * \
+                     (self.ball.rect.centery - y_mod)) / self.ball.vy))
                 # Top/bottom wall collision first :
                 if x_mod > (self.l_pad.rect.right):
-                    self.handle_top_bottom_collision(self.ball, self.win_h)
-                # Left padlle collision would arrive first if paddle well positioned
+                    self.handle_walls_coll(self.ball, self.win_h)
+                # Left padlle collision first if paddle well positioned
                 else:
-                    goal_to_be = self.handle_left_collision(goal_to_be)
-                    # If left paddle not well positioned, a goal will hapen, but still needs to manage boucing on top/bottom wall
+                    goal_to_be = self.handle_l_coll(goal_to_be)
+                    # If left pad not well positioned, goal will happen, 
+                    # but still needs to manage boucing on walls
                     if goal_to_be:
-                        self.handle_top_bottom_collision()
-            # Left paddle collision possible and no collision with top/bottom walls
+                        self.handle_walls_coll()
+            # Left paddle collision possible and no wall collision
             else:
-                goal_to_be = self.handle_left_collision(goal_to_be)
+                goal_to_be = self.handle_l_coll(goal_to_be)
 
         # Right paddle possible collision case
         elif (r_coll and goal_to_be == False):
@@ -379,25 +392,27 @@ class Game():
             # Ball also colliding with top wall
             elif top_coll:
                 y_mod = self.ball.r
-            # Neef to determine which collision would arrive first: top/bottom wall or right paddle ?
+            # Which collision first: top/bottom wall or right paddle ?
             if bot_coll or top_coll:
-                x_mod = int(self.ball.rect.centerx - ((self.ball.vx * (self.ball.rect.centery - y_mod)) / self.ball.vy))
+                x_mod = int(self.ball.rect.centerx - ((self.ball.vx * \
+                     (self.ball.rect.centery - y_mod)) / self.ball.vy))
                 # Top/bottom wall collision first :
                 if x_mod < self.r_pad.x:
-                    handle_top_bottom_collision(ball, win_h)
-                # Right padlle collision would arrive first if paddle well positioned
+                    handle_walls_coll(ball, win_h)
+               # Right padlle collision first if paddle well positioned
                 else:        
-                    goal_to_be = self.handle_right_collision(goal_to_be)
-                    # If right paddle not well positioned, a goal will hapen, but still needs to manage boucing on top/bottom wall
+                    goal_to_be = self.handle_r_coll(goal_to_be)
+                    # If right pad not well positioned, goal will happen, 
+                    # but still needs to manage boucing on walls
                     if goal_to_be:
-                        self.handle_top_bottom_collision()
-            # Right paddle collision possible and no collision with top/bottom walls
+                        self.handle_walls_coll()
+            # Right paddle collision possible and no wall collision
             else:
-                goal_to_be = self.handle_right_collision(goal_to_be)
+                goal_to_be = self.handle_r_coll(goal_to_be)
         
-        # No possible collision with paddles, but just with top or bottom walls
+        # No possible collision with pads, but wall collision possible
         elif (bot_coll or top_coll):
-            self.handle_top_bottom_collision()
+            self.handle_walls_coll()
 
         return goal_to_be
 
@@ -407,65 +422,70 @@ class Game():
 
     def welcome(self):
         """
-        Displays a welcome screen for a certain duration at program start.
+        Displays splash screen for a certain duration at program start.
         """
         start_time = time.time()
+        current_time = time.time()
         
         # Managing display:
         self.win.fill(self.BLACK)
-        pygame.draw.circle(self.win, self.WHITE, (self.win_w//2, self.win_h//2), self.WELCOME_RADIUS_RATIO * self.win_h)
-        skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "SKATEPONG", self.win_w // 2, self.win_h // 2, self.BLACK)
+        x = self.win_w // 2
+        y = self.win_h // 2
+        r = int(self.WELCOME_RADIUS_RATIO * self.win_h)
+        pygame.draw.circle(self.win, self.WHITE, (x, y), r)
+        font_nm = self.FONT_NAME
+        txt = "SKATEPONG"
+        skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, x, y, \
+                          self.BLACK)
         pygame.display.update()
         
-        current_time = time.time()
-        while current_time - start_time < 3:
-
+        while current_time - start_time < self.DELAY_WELCOME: 
             self.clock.tick(self.FPS)
-
-            # Closing game window if red cross clicked or ESCAPE pressed:
+            # Checking requests for closing / calibrating / restarting:
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
-            #check_exit_game(keys)
             # Updating current time
             current_time = time.time()
-            
         self.game_status = self.SCENE_WAITING_GYROS
             
     def wait_gyros(self):
         """
-        Game does not start if both skateboards are not connected at startup.
+        Game does not start until both skateboards are connected.
         """
-        
-        both_gyros_connected = False
-        while both_gyros_connected != True:
-            
+        l_gyro_connected = False
+        r_gyro_connected = False
+        while not (l_gyro_connected and r_gyro_connected):
+            # Left gyro test :
             try:
-                l_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_1, 'y', self.GYRO_SENSITIVITY)
+                l_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_1, \
+                        'y', self.GYRO_SENSITIVITY)
             except IOError:
                 l_gyro_connected = False
             else:
                 l_gyro_connected = True
-            
+            # Right gyro test :
             try:
-                r_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_2, 'y', self.GYRO_SENSITIVITY)
+                r_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_2, \
+                         'y', self.GYRO_SENSITIVITY)
             except IOError:
                 r_gyro_connected = False
             else:
                 r_gyro_connected = True
-            
-            if l_gyro_connected and r_gyro_connected:
-                both_gyros_connected = True
-            
-            if both_gyros_connected == False:
+            # Case with at least one gyro not connected:
+            if not (l_gyro_connected and r_gyro_connected):
                 # Managing display:
                 self.win.fill(self.BLACK)
-                if l_gyro_connected == True and r_gyro_connected == False:
-                    message = "Right skateboard NOT connected"
-                elif l_gyro_connected == False and r_gyro_connected == True:
-                    message = "Left skateboard NOT connected"
+                if l_gyro_connected == True:
+                    msg = "Right skateboard NOT connected"
+                elif r_gyro_connected == True:
+                    msg = "Left skateboard NOT connected"
                 else:
-                    message = "Please connect skateboards"
-                skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), message, self.win_w // 2, self.win_h // 2, self.WHITE)
+                    msg = "Please connect skateboards"
+                font_nm = self.FONT_NAME
+                x = self.win_w // 2
+                y = self.win_h // 2
+                skt_tls.draw_text(self.win, font_nm, self.ft_0_1, \
+                                  msg, x, y, self.WHITE)
                 pygame.display.update()
         
         self.l_gyro = l_gyro
@@ -474,8 +494,7 @@ class Game():
 
     def wait_players(self):
         """
-        Enters 'standby' state before detection of actives players on each skateboard.
-        
+        Standby before detection of active players on each skateboard.
         Note : paddles active.
         """
         moving_time = time.time()
@@ -484,14 +503,13 @@ class Game():
         right_player_ready = False
         self.ball.reset()
         
-        while ((left_player_ready == False) or (right_player_ready == False)):
+        while not (left_player_ready and right_player_ready):
 
             self.clock.tick(self.FPS)
 
-            # Closing game window if red cross clicked or ESCAPE pressed:        
+            # Checking requests for closing / calibrating / restarting:        
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
-            #check_exit_game(keys)
 
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
@@ -500,19 +518,29 @@ class Game():
             #game_status = check_for_pads_calib(keys, game_status)
             if self.game_status == self.SCENE_CALIBRATION:
                 return
-
-            if ((left_player_ready == False) and (right_player_ready == False)):
-                message = "WAITING FOR PLAYERS"
-            elif ((left_player_ready == False) and (right_player_ready == True)):
-                message = "LEFT PLAYER MISSING"
-            elif ((left_player_ready == True) and (right_player_ready == False)):
-                message = "RIGHT PLAYER MISSING"
+            
+            if not (left_player_ready and right_player_ready):
+                if right_player_ready == True:
+                    msg = "LEFT PLAYER MISSING"
+                elif left_player_ready == True:
+                    msg = "RIGHT PLAYER MISSING"
+                else:
+                    msg = "WAITING FOR PLAYERS"
             
             # Managing display:
             self.win.fill(self.BLACK)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), message, self.win_w // 2, self.win_h // 4, self.WHITE)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "MOVE SKATES TO START", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
-            self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
+            font_nm = self.FONT_NAME
+            x1 = self.win_w // 2
+            y1 = self.win_h // 4
+            x2 = self.win_w // 2
+            y2 = (self.win_h * 3) // 4
+            txt = "MOVE SKATES TO START"
+            skt_tls.draw_text(self.win, font_nm, self.ft_0_1, msg, \
+                              x1, y1, self.WHITE)
+            skt_tls.draw_text(self.win, font_nm, self.ft_0_05, txt, \
+                              x2, y2, self.WHITE)
+            self.draw_game_objects(draw_pads = True, draw_ball = True, \
+                                draw_scores = False, draw_line = False)
             pygame.display.update()
             
             vy_l_pad = self.l_pad.move(self.win_h)
@@ -527,8 +555,8 @@ class Game():
             current_time = time.time()
 
             if current_time - moving_time > self.DELAY_INACT_PLAYER:
-                left_player_ready = 0
-                right_player_ready = 0
+                left_player_ready = False
+                right_player_ready = False
 
         self.game_status = self.SCENE_COUNTDOWN
 
@@ -545,24 +573,31 @@ class Game():
             
             self.clock.tick(self.FPS)
             
-            # Closing game window if red cross clicked or ESCAPE pressed:
+            # Checking requests for closing / calibrating / restarting:
             keys = pygame.key.get_pressed()
             #check_exit_game(keys)
             self.check_user_inputs(keys)
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
 
-            time_before_start = self.DELAY_COUNTDOWN - int(current_time - start_time) 
+            time_before_start = self.DELAY_COUNTDOWN \
+                                - int(current_time - start_time) 
 
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
 
             # Managing display:
             self.win.fill(self.BLACK)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_2 * self.win_h), str(time_before_start), self.win_w // 2, self.win_h // 4, self.WHITE)
-            self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
+            font_nm = self.FONT_NAME
+            txt = str(time_before_start)
+            x = self.win_w // 2
+            y = self.win_h // 4
+            skt_tls.draw_text(self.win, font_nm, self.ft_0_2, txt, 
+                              x, y, self.WHITE)
+            self.draw_game_objects(draw_pads = True, draw_ball = True, \
+                                draw_scores = False, draw_line = False)
             pygame.display.update()
-
+            
             current_time = time.time()
        
         self.game_status = self.SCENE_GAME_ONGOING
@@ -570,8 +605,6 @@ class Game():
     def game_ongoing(self):
         """
         Controls the game itself.
-        
-        1 point each time a player shoots the ball inside the oponent's zone.
         """
         
         self.l_score = 0
@@ -579,20 +612,22 @@ class Game():
         goal_to_be = False
         random_number = random.randint(1, 2)
         
+        # Determining ball direction at start.
         if random_number == 1:
-            self.ball.vx =  self.ball.vx_straight # Ball going to the right at start
+            self.ball.vx =  self.ball.vx_straight # To the right
         else:
-            self.ball.vx =  -self.ball.vx_straight # Ball going to the left at start
+            self.ball.vx =  -self.ball.vx_straight # To the left
             
         while (self.l_score < self.WINNING_SCORE and self.r_score < self.WINNING_SCORE):
 
             self.clock.tick(self.FPS)
-            # Closing game window if red cross clicked or ESCAPE pressed:
+            # Checking requests for closing / calibrating / restarting:
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
             
             # Going to paddles calibration scene upon user request:
-            if self.game_status == self.SCENE_CALIBRATION  or self.game_status == self.SCENE_WAITING_PLAYERS:
+            if self.game_status == self.SCENE_CALIBRATION \
+            or self.game_status == self.SCENE_WAITING_PLAYERS:
                 return
             
             # Reinitializing gyro if necessary (after i2c deconnection)
@@ -607,17 +642,18 @@ class Game():
 
             # Managing display:
             self.win.fill(self.BLACK)
-            self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = True, draw_line = True)
+            self.draw_game_objects(draw_pads = True, draw_ball = True, \
+                                   draw_scores = True, draw_line = True)
             pygame.display.update()   
 
-            if (self.l_score >= self.WINNING_SCORE or self.r_score >= self.WINNING_SCORE):
+            if self.l_score >= self.WINNING_SCORE \
+            or self.r_score >= self.WINNING_SCORE:
                 self.game_status = self.SCENE_GAME_END
                 return
             
     def game_end(self):
         """
         Announces the winner, with final score.
-        
         Note : paddles active.
         """
         start_time = time.time()
@@ -625,15 +661,15 @@ class Game():
         self.ball.reset()
         
         if (self.l_score == self.WINNING_SCORE):
-            message = "LEFT PLAYER WON"
+            msg = "LEFT PLAYER WON"
         else:
-            message = "RIGHT PLAYER WON"
+            msg = "RIGHT PLAYER WON"
         
         while current_time - start_time < self.DELAY_GAME_END:
             
             self.clock.tick(self.FPS)
 
-            # Closing game window if red cross clicked or ESCAPE pressed:
+            # Checking requests for closing / calibrating / restarting:
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
             #check_exit_game(keys)
@@ -646,8 +682,13 @@ class Game():
 
             # Managing display:
             self.win.fill(self.BLACK)
-            self.draw_game_objects(draw_pads = True, draw_ball = False, draw_scores = True, draw_line = False)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_15 * self.win_h), message, self.win_w // 2, self.win_h // 2, self.WHITE)
+            font_nm = self.FONT_NAME
+            x = self.win_w // 2
+            y = self.win_h // 2
+            self.draw_game_objects(draw_pads = True, draw_ball = False,\
+                                  draw_scores = True, draw_line = False)
+            skt_tls.draw_text(self.win, font_nm, self.ft_0_15, msg, \
+                              x, y, self.WHITE)
             pygame.display.update()
 
             current_time = time.time()
@@ -658,21 +699,20 @@ class Game():
         """
         Handles the paddles calibration.
         
-        - A first screen indicates that calibration will take place after countdown
-        => Indic
-        - A second screen allows user to test the new calibration for a given time
-        - Then, going back to the scene "waiting for players".
+        - 1 : indications and coutdown before calibration
+        - 2 : gives user some time to test the new calibration
+        - 3 : going back to the scene "waiting for players".
         """
         start_time = time.time()
         current_time = time.time()
         self.ball.reset()
         
-        # Announcing that calibration is about to take place
+        # Announcing that calibration is about to take place:
         while current_time - start_time < self.DELAY_BEF_PAD_CALIB:
 
             self.clock.tick(self.FPS)
 
-            # Closing game window if red cross clicked or ESCAPE pressed:
+            # Checking requests for closing / calibrating / restarting:
             keys = pygame.key.get_pressed()
             #check_exit_game(keys)
             self.check_user_inputs(keys)
@@ -680,17 +720,31 @@ class Game():
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
 
-            time_before_start = self.DELAY_BEF_PAD_CALIB - int(current_time - start_time)
+            time_before_start = self.DELAY_BEF_PAD_CALIB \
+                                - int(current_time - start_time)
            
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
             
             # Managing display:
             self.win.fill(self.BLACK)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "CALIBRATION IS ABOUT TO START", self.win_w // 2, self.win_h // 4, self.WHITE)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_2 * self.win_h), str(time_before_start), self.win_w // 2, self.win_h // 2, self.WHITE)
-            self.draw_game_objects(draw_pads = True, draw_ball = False, draw_scores = False, draw_line = False)
+            txt = "CALIBRATION IS ABOUT TO START"
+            x = self.win_w // 2
+            y = self.win_h // 4
+            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_1, \
+                              txt, x, y, self.WHITE)
+            txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"
+            x = self.win_w // 2
+            y = (self.win_h * 3) // 4                     
+            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_05, \
+                              txt, x, y, self.WHITE)
+            txt = str(time_before_start)
+            x = self.win_w // 2
+            y = self.win_h // 2               
+            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_2, \
+                              txt, x, y, self.WHITE)
+            self.draw_game_objects(draw_pads = True, draw_ball = False,\
+                                draw_scores = False, draw_line = False)
             pygame.display.update()
             
             current_time = time.time()
@@ -699,9 +753,19 @@ class Game():
         
         # Managing display:
         self.win.fill(self.BLACK)
-        skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "CALIBRATION ONGOING...", self.win_w // 2, self.win_h // 4, self.WHITE)
-        skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
-        self.draw_game_objects(draw_pads = True, draw_ball = False, draw_scores = False)
+        
+        txt = "CALIBRATION ONGOING..."
+        x = self.win_w // 2
+        y = self.win_h // 4
+        skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_1, \
+                          txt, x, y, self.WHITE)
+        txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"
+        x = self.win_w // 2
+        y = (self.win_h * 3) // 4                     
+        skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_05, \
+                          txt, x, y, self.WHITE)
+        self.draw_game_objects(draw_pads = True, draw_ball = False, \
+                              draw_scores = False, draw_line = False)
         pygame.display.update()
         # Gyroscope offset measurement:
         self.l_gyro.offset = self.l_gyro.measure_gyro_offset()
@@ -709,7 +773,6 @@ class Game():
         # Paddles calibration:
         self.l_pad.move_to_center(self.win_h)
         self.r_pad.move_to_center(self.win_h)
-
 
         # Annoucing that calibration has been performed :
         start_time = time.time()
@@ -719,7 +782,7 @@ class Game():
 
             self.clock.tick(self.FPS)
 
-            # Closing game window if red cross clicked or ESCAPE pressed:
+            # Checking requests for closing / calibrating / restarting:
             keys = pygame.key.get_pressed()
             #check_exit_game(keys)
             self.check_user_inputs(keys)
@@ -727,17 +790,32 @@ class Game():
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
 
-            time_before_start = self.DELAY_AFT_PAD_CALIB - int(current_time - start_time)
+            time_before_start = self.DELAY_AFT_PAD_CALIB \
+                                - int(current_time - start_time)
 
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
             
             # Managing display:
             self.win.fill(self.BLACK)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "CALIBRATION DONE", self.win_w // 2, self.win_h // 4, self.WHITE)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "MOVE SKATES TO TEST CALIBRATION", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
-            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_2 *self. win_h), str(time_before_start), self.win_w // 2, self.win_h // 2, self.WHITE)
-            self.draw_game_objects(draw_pads = True, draw_ball = False, draw_scores = False)
+            txt = "CALIBRATION DONE"
+            x = self.win_w // 2
+            y = self.win_h // 4
+            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_1, \
+                              txt, x, y, self.WHITE)
+            txt = "MOVE SKATES TO TEST CALIBRATION"
+            x = self.win_w // 2
+            y = (self.win_h * 3) // 4                     
+            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_05, \
+                              txt, x, y, self.WHITE)
+            txt = str(time_before_start)
+            x = self.win_w // 2
+            y = self.win_h // 2               
+            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_2, \
+                              txt, x, y, self.WHITE)
+            
+            self.draw_game_objects(draw_pads = True, draw_ball = False,\
+                                draw_scores = False, draw_line = False)
             pygame.display.update()
             
             current_time = time.time()
