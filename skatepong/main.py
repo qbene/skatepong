@@ -38,7 +38,7 @@ def main():
     SCENE_GAME_END = 5
     SCENE_CALIBRATION = 6
 
-    game = skatepong.game.Game(dev_mode = True)
+    game = skatepong.game.Game(full_screen = True)
     while True:
         
         if game.game_status == SCENE_WELCOME:

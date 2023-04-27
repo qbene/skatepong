@@ -19,7 +19,7 @@ class Ball():
         self.win = win
         self.original_x = x # Ball center on the x axis
         self.original_y = y # Ball center on the y axis
-        self.color = clr
+        self.color = color
         self.r = r # Ball radius (px)
         self.vx_straight = vx_straight # Ball velocity when horiz (px)
         self.vx = self.original_vx = vx # Ball velocity - x axis (px)
@@ -91,7 +91,7 @@ class Paddle():
             self.gyro.ready_for_reinit = True
             gyro_calib = gyro_raw - self.gyro.offset
             vy = int(gyro_calib / self.gyro.numerical_sensitivity * \
-            self.win_h * vy_factor)
+                     self.win_h * vy_factor)
             
             """
             if gyro_calib < -200:
@@ -114,8 +114,8 @@ class Paddle():
             """
             '''
             print("Gyro (" + self.gyro.axis + " axis) => Raw data :", \
-            str(round(gyro_raw,2)), "/ Calibrated data :", \
-            str(round(gyro_calib,2)))
+                  str(round(gyro_raw,2)), "/ Calibrated data :", \
+                  str(round(gyro_calib,2)))
             '''
         return vy
 

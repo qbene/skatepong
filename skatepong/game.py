@@ -10,9 +10,9 @@ import math
 import random
 import sys
 from mpu6050 import mpu6050
-import skatepong.gyro
-import skatepong.tools
-import skatepong.game_objects
+import skatepong.gyro as skt_gyro
+import skatepong.tools as skt_tls
+import skatepong.game_objects as skt_obj
 
 #-----------------------------------------------------------------------
 # CODE
@@ -20,52 +20,71 @@ import skatepong.game_objects
 
 class Game():
 
+    """
+    2 players pong game, with real skateboards as actuators.
+    
+    - Objective : Shoot the ball beyond the oponent's zone (+1 point).
+    - End : Game ends when a player reaches a given number of points.
+    - The two paddles are controlled independently based on the angular
+      rotation measured by the gyroscopes mounted under each skateboard.
+      
+    - Games scenes :
+        WELCOME : Splash screen at application start.
+        WAITING_GYROS : Waiting that both gyroscopes are connected.
+        WAITING_PLAYERS : Waiting for motion on both skates.
+        COUNTDOWN : Countdown before the actual game starts.
+        GAME_ONGOING : Game running.
+        GAME_END : Game has ended, the winner is announced.
+        CALIBRATION : Allows paddles calibratation upon request.
+    """
+
     #-------------------------------------------------------------------
     # GAME PARAMETERS
     #-------------------------------------------------------------------
     
+    # Main game parameters 
     WINNING_SCORE = 3 # Number of goals to win the game
-    BALL_ANGLE_MAX = 60 # Max angle after paddle collision (degrees) [30-75]
-    VELOCITY_ANGLE_FACTOR = 2 # Allows to increase ball velocity when angle (longer distance) [2 - 3]
+    BALL_ANGLE_MAX = 60 # Max angle after paddle collision (deg) [30-75]
+    VELOCITY_ANGLE_FACTOR = 2 # Higher ball velocity when angle [2 - 3]
     # Delays
-    DELAY_INACT_PLAYER = 5 # Delay after which a player is considered inactive (s)
-    DELAY_COUNTDOWN = 3 # Countdown initial time before starting the game (s)
+    DELAY_INACT_PLAYER = 5 # Delay before a player becomes inactive (s)
+    DELAY_COUNTDOWN = 3 # Countdown before game starts (s)
     DELAY_GAME_END = 5 # Delay after game ends (s)
-    DELAY_BEF_PAD_CALIB = 10 # Delay before paddles calibration starts (s)
-    DELAY_AFT_PAD_CALIB = 10 # Delay after paddles calibration is done (s)
+    DELAY_BEF_PAD_CALIB = 5 # Delay before paddles calib. starts (s)
+    DELAY_AFT_PAD_CALIB = 5 # Delay for testing paddles calib. (s)
     # Technical parameters
     FPS = 60 # Max number of frames per second
     GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_500DEG
-    '''Possible values:
-    mpu6050.GYRO_RANGE_250DEG
-    mpu6050.GYRO_RANGE_500DEG
-    mpu6050.GYRO_RANGE_1000DEG
-    mpu6050.GYRO_RANGE_2000DEG
-    '''
+    """
+    For GYRO_SENSITIVITY, use one of the following constants:
+    mpu6050.GYRO_RANGE_250DEG = 0x00 # +/- 250 deg/s
+    mpu6050.GYRO_RANGE_500DEG = 0x08 # +/- 500 deg/s
+    mpu6050.GYRO_RANGE_1000DEG = 0x10 # +/- 1000 deg/s
+    mpu6050.GYRO_RANGE_2000DEG = 0x18 # +/- 2000 deg/s
+    """
     # Sizes ([indicates recommended values])
-    WELCOME_RADIUS_RATIO = 0.25 # Ratio to screen height [0.1 - 0.5]
-    PAD_WIDTH_RATIO = 0.015 # Ratio to screen width [0.005 - 0.1]
-    PAD_HEIGHT_RATIO = 0.2 # Ratio to screen height [0.05 - 0.2]
-    PAD_X_OFFSET_RATIO = 0.02 # Ratio to screen width [0.01 - 0.02] - Frame offset
-    BALL_RADIUS_RATIO = 0.02 # Ratio to min screen width/height [0.01 - 0.04]
-    PAD_FLAT_BOUNCE_RATIO = 0.01 # # Ratio to screen width [0.005 - 0.02]
-    BALL_V_RATIO = 0.025 # Ratio to min screen width [0.005 - 0.025]
-    MID_LINE_HEIGHT_RATIO = 0.05 # Ratio to screen height [ideally 1/x -> int]
-    MID_LINE_WIDTH_RATIO = 0.006 # Ratio to screen width [0.005 - 0.01]
-    SCORE_Y_OFFSET_RATIO = 0.02 # Ratio to screen height (to set score vertically)
-    CENTER_CROSS_MULTIPLIER = 3 # To be multiplied with MID_LINE_WIDTH_RATIO [2 - 5]
-    # Texts
+    WELCOME_RADIUS_RATIO = 0.25 # Rat. disp. h [0.1 - 0.5]
+    PAD_WIDTH_RATIO = 0.015 # Rat. disp. w [0.005 - 0.1]
+    PAD_HEIGHT_RATIO = 0.2 # Rat. disp. h [0.05 - 0.2]
+    PAD_X_OFFSET_RATIO = 0.02 # Rat. disp. w [0.01 - 0.02] frame offset
+    BALL_RADIUS_RATIO = 0.02 # Rat. min disp. w/h [0.01 - 0.04]
+    PAD_FLAT_BOUNCE_RATIO = 0.01 # Rat. disp. w [0.005 - 0.02]
+    BALL_V_RATIO = 0.025 # Rat. disp. w [0.005 - 0.025]
+    MID_LINE_WIDTH_RATIO = 0.006 # Rat. disp. w [0.005 - 0.01]
+    SCORE_Y_OFFSET_RATIO = 0.02 # Rat. disp. h - frame vertical offset
+    CENTER_CROSS_MULTIPLIER = 3 # Mid line thikness factor [2 - 5]
+    # Text fonts parameters (names and sizes)
     FONT_NAME = "comicsans" # Font used for texts
-    FONT_RATIO_0_05 = 0.05 # Ratio to screen height
-    FONT_RATIO_0_1 = 0.1 # Ratio to screen height
-    FONT_RATIO_0_15 = 0.15 # Ratio to screen height
-    FONT_RATIO_0_2 = 0.2 # Ratio to screen height
+    FONT_RATIO_0_05 = 0.05 # Rat. disp. h
+    FONT_RATIO_0_1 = 0.1 # Rat. disp. h
+    FONT_RATIO_0_15 = 0.15 # Rat. disp. h
+    FONT_RATIO_0_2 = 0.2 # Rat. disp. h
 
     #-------------------------------------------------------------------
     # CONSTANTS
     #-------------------------------------------------------------------
 
-    # Game scenes (used to navigate between one another) :
+    # Game scenes (used for game navigation):
     SCENE_WELCOME = 0
     SCENE_WAITING_GYROS = 1
     SCENE_WAITING_PLAYERS = 2
@@ -73,13 +92,13 @@ class Game():
     SCENE_GAME_ONGOING = 4
     SCENE_GAME_END = 5
     SCENE_CALIBRATION = 6
-
     # Colors
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     GREY = (127, 127, 127)    
 
-    def __init__(self, game_status = 0, l_score = 0, r_score = 0, full_screen = True):
+    def __init__(self, game_status = 0, l_score = 0, r_score = 0, \
+    full_screen = True):
         pygame.init()
         self.clock = pygame.time.Clock()
         self.game_status = game_status
@@ -96,67 +115,88 @@ class Game():
         """
         Initializes game window, and adjusts size to display resolution.
         """
-        disp_w = pygame.display.Info().current_w # Display width (in pixels)
-        disp_h = pygame.display.Info().current_h # Display height (in pixels)
+        disp_w = pygame.display.Info().current_w # Disp. width (px)
+        disp_h = pygame.display.Info().current_h # Disp. height (px)
         if self.full_screen == False:
             win = pygame.display.set_mode([disp_w, disp_h - 100])
             pygame.display.set_caption("Skatepong")         
         else:
             win = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
         win_w , win_h = pygame.display.get_surface().get_size()
-        return win, win_w, win_h # Capital letters for WIN to identify main window
+        return win, win_w, win_h
 
-    def compute_elements_sizes(self):
+    def comp_elem_sizes(self):
         """
         Computes game elements sizes/speeds based on display resolution.
         """
         pad_w = int(self.win_w * self.PAD_WIDTH_RATIO)
         pad_h = int(self.win_h * self.PAD_HEIGHT_RATIO)
-        ball_r = min(int(self.win_w * self.BALL_RADIUS_RATIO), int(self.win_h * self.BALL_RADIUS_RATIO))
+        ball_r = min(int(self.win_w * self.BALL_RADIUS_RATIO), \
+                     int(self.win_h * self.BALL_RADIUS_RATIO))
         ball_vx_straight = int(self.win_w * self.BALL_V_RATIO)
         return pad_w, pad_h, ball_r, ball_vx_straight
 
     def create_game_elements(self):
         """
         Creates game objects at program start.
+        - Paddles centered vertically.
+        - Ball centered horizontally and vertically.
         """
-        # Creating game objects:
-        # - Both paddles are centered vertically
-        # - The ball is created in the center of the display
-        pad_w, pad_h, ball_r, ball_vx_straight = self.compute_elements_sizes()
+        pad_w, pad_h, ball_r, ball_vx_straight = self.comp_elem_sizes()
         l_pad_x =  int(self.win_w * self.PAD_X_OFFSET_RATIO)
-        r_pad_x = self.win_w - int(self.PAD_X_OFFSET_RATIO * self.win_w) - pad_w
+        r_pad_x = self.win_w - int(self.PAD_X_OFFSET_RATIO*self.win_w) \
+                  - pad_w
         pad_y = (self.win_h - pad_h) // 2
-        self.l_pad = skatepong.game_objects.Paddle(self.win, self.win_h, l_pad_x, pad_y, pad_w, pad_h, self.WHITE, self.l_gyro)
-        self.r_pad = skatepong.game_objects.Paddle(self.win, self.win_h, r_pad_x, pad_y, pad_w, pad_h, self.WHITE, self.r_gyro)
-        self.ball = skatepong.game_objects.Ball(self.win, self.win_w // 2, self.win_h // 2, ball_r, self.WHITE, ball_vx_straight, 0, 0)
+        self.l_pad = skt_obj.Paddle(self.win, self.win_h, l_pad_x, \
+                     pad_y, pad_w, pad_h, self.WHITE, self.l_gyro)
+        self.r_pad = skt_obj.Paddle(self.win, self.win_h, r_pad_x, \
+                     pad_y, pad_w, pad_h, self.WHITE, self.r_gyro)
+        self.ball = skt_obj.Ball(self.win, self.win_w // 2, \
+                    self.win_h // 2, ball_r, self.WHITE, \
+                    ball_vx_straight, 0, 0)
 
     def reinitialize_gyro_if_needed(self):
         """
-        Recreate gyroscopes objects following deconnections.
+        Recreates gyroscopes objects following deconnections.
         """
-        if self.l_gyro.error == True and self.l_gyro.ready_for_reinit == True:
+        if (self.l_gyro.error and self.l_gyro.ready_for_reinit):
             try:
-                self.l_gyro = skatepong.gyro.Gyro_one_axis(skatepong.gyro.Gyro_one_axis.I2C_ADDRESS_1, 'y', self.GYRO_SENSITIVITY)
+                self.l_gyro = skt_gyro.Gyro_one_axis( \
+                            skt_gyro.Gyro_one_axis.I2C_ADDRESS_1,\
+                            'y', self.GYRO_SENSITIVITY)
             except IOError:
                 pass
-        if self.r_gyro.error == True and self.r_gyro.ready_for_reinit == True:
+        if (self.r_gyro.error and self.r_gyro.ready_for_reinit):
             try:
-                self.r_gyro = skatepong.gyro.Gyro_one_axis(skatepong.gyro.Gyro_one_axis.I2C_ADDRESS_2, 'y', self.GYRO_SENSITIVITY)
+                self.r_gyro = skt_gyro.Gyro_one_axis( \
+                            skt_gyro.Gyro_one_axis.I2C_ADDRESS_2,\
+                            'y', self.GYRO_SENSITIVITY)
             except IOError:
                 pass
 
-    def draw_game_objects(self, draw_pads = False, draw_ball = False, draw_scores = False, draw_line = False):
+    def draw_game_objects(self, draw_pads = False, draw_ball = False, \
+                          draw_scores = False, draw_line = False):
         """
-        Draws on a surface the desired game elements (pads / ball / scores)
-        
-        Note : Each scene of the game do not require every single game object 
+        Draws the desired game elements (pads / ball / scores)
+        Note : Each game scene do not require every single game object 
         """
         if draw_scores == True:
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), str(self.l_score), self.win_w // 4, int(self.FONT_RATIO_0_1 * self.win_h), self.WHITE)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), str(self.r_score), (self.win_w * 3) // 4, int(self.FONT_RATIO_0_1 * self.win_h), self.WHITE)
+            font_nm = self.FONT_NAME
+            font_sz = int(self.FONT_RATIO_0_1 * self.win_h)
+            txt_l = str(self.l_score)
+            txt_r = str(self.r_score)
+            x_l = self.win_w // 4
+            x_r = (self.win_w * 3) // 4
+            y = int(self.FONT_RATIO_0_1 * self.win_h)
+            skt_tls.draw_text(self.win, font_nm, font_sz, txt_l, \
+                              x_l, y, self.WHITE)
+            skt_tls.draw_text(self.win, font_nm, font_sz, txt_r, \
+                              x_r, y, self.WHITE)
         if draw_line == True:        
-            skatepong.tools.draw_mid_line(self.win, self.win_w, self.win_h, int(self.win_w * self.MID_LINE_WIDTH_RATIO), self.CENTER_CROSS_MULTIPLIER, self.WHITE)
+            thick = int(self.win_w * self.MID_LINE_WIDTH_RATIO)
+            horiz_w_factor = self.CENTER_CROSS_MULTIPLIER
+            skt_tls.draw_mid_line(self.win, self.win_w, self.win_h, \
+                                  thick, horiz_w_factor, self.WHITE)
         if draw_pads == True:
             self.l_pad.draw()
             self.r_pad.draw()
@@ -184,21 +224,23 @@ class Game():
         goal = False
         if self.ball.rect.left < 0:
             self.r_score += 1
-            vx_direction_after_goal = 1
+            vx_dir_aft_goal = 1
             goal = True
         elif self.ball.rect.right > self.win_w:
             self.l_score += 1
-            vx_direction_after_goal = -1
+            vx_dir_aft_goal = -1
             goal = True
         if goal == True:
             self.ball.reset()
-            self.ball.vx = self.ball.vx_straight * vx_direction_after_goal
+            self.ball.vx = self.ball.vx_straight * vx_dir_aft_goal
             goal_to_be = False
 
         return goal_to_be
 
     def handle_top_bottom_collision(self):
-        """ Collision with top or bottom wall"""
+        """
+        Handles collision between ball and top or bottom walls.
+        """
         # Bottom wall
         if (self.ball.rect.bottom >= self.win_h):
             y_mod = self.win_h - self.ball.r  
@@ -210,15 +252,19 @@ class Game():
         self.ball.vy *= -1
         
     def handle_left_collision(self, goal_to_be):
-        #goal_to_be = False
+        """
+        Handles collision between ball and left paddle.
+        """
         if self.ball.rect.left <= self.l_pad.rect.right:
             x_mod = self.l_pad.rect.right + self.ball.r
             y_mod = int(self.ball.rect.centery - (self.ball.rect.centerx - x_mod) * self.ball.vy / self.ball.vx)            
             # If ball colliding with paddle:
-            if y_mod >= self.l_pad.rect.top and y_mod <= self.l_pad.rect.bottom:            
+            if (y_mod >= self.l_pad.rect.top \
+            and y_mod <= self.l_pad.rect.bottom):            
                 y_pad_mid = self.l_pad.rect.centery
                 # Bounce angle calculation
-                if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w) and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_w)):
+                if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w)\
+                and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_w)):
                     self.ball.vx = self.ball.vx_straight                    
                 else:
                     angle = round((y_mod - y_pad_mid) / (self.l_pad.h / 2) * self.BALL_ANGLE_MAX)
@@ -226,8 +272,10 @@ class Game():
                     #vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w)
                     #vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w)
                     # Faster when there is an angle to compensate for longer distance
-                    vx = round(math.cos(math.radians(angle)) * self.ball.vx_straight) * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))
-                    vy = round(math.sin(math.radians(angle)) * self.ball.vx_straight) * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                    
+                    vx = round(math.cos(math.radians(angle)) * self.ball.vx_straight) \
+                         * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))
+                    vy = round(math.sin(math.radians(angle)) * self.ball.vx_straight) \
+                         * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                    
                     self.ball.vy = vy
                     self.ball.vx = vx
                 self.ball.rect.center = (x_mod, y_mod)
@@ -236,25 +284,30 @@ class Game():
         return goal_to_be
 
     def handle_right_collision(self, goal_to_be):
-        #goal_to_be = False
+        """
+        Handles collision between ball and right paddle.
+        """
         if self.ball.rect.right >= self.r_pad.rect.left:
             x_mod = self.r_pad.rect.left - self.ball.r
             y_mod = int(self.ball.rect.centery - (self.ball.rect.centerx - x_mod) * self.ball.vy / self.ball.vx)            
             # If ball colliding with paddle:
-            if y_mod >= self.r_pad.rect.top and y_mod <= self.r_pad.rect.bottom:            
+            if y_mod >= self.r_pad.rect.top \
+            and y_mod <= self.r_pad.rect.bottom:            
                 y_pad_mid = self.r_pad.rect.centery
                 # Bounce angle calculation
-                if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w) and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_w)):
+                if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w) \
+                and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_w)):
                     self.ball.vx = -self.ball.vx_straight
                 else:
                     angle = round((y_mod - y_pad_mid) / (self.r_pad.h / 2) * self.BALL_ANGLE_MAX)
-                    #angle = round((ball.y - y_pad_mid) / (r_pad.h / 2) * BALL_ANGLE_MAX)
                     # Constant speed
                     #vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w)
                     #vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w)
                     # Faster when there is an angle to compensate for longer distance
-                    vx = round(math.cos(math.radians(angle)) * self.ball.vx_straight) * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))
-                    vy = round(math.sin(math.radians(angle)) * self.ball.vx_straight) * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                    
+                    vx = round(math.cos(math.radians(angle)) * self.ball.vx_straight) \
+                         * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))
+                    vy = round(math.sin(math.radians(angle)) * self.ball.vx_straight) \
+                         * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                    
                     self.ball.vy = vy
                     self.ball.vx = -vx
                 self.ball.rect.center = (x_mod, y_mod)
@@ -263,21 +316,25 @@ class Game():
         return goal_to_be
 
     def check_collision(self):
-        
-        bottom_collision = False
-        top_collision = False
-        left_collision = False
-        right_collision = False
+        """
+        Detects possible collisions between ball and walls or pads.
+        """
+        bot_coll = False
+        top_coll = False
+        l_coll = False
+        r_coll = False
         if (self.ball.rect.bottom >= self.win_h):
-            bottom_collision = True
+            bot_coll = True
         elif (self.ball.rect.top <= 0):
-            top_collision = True
-        if ((self.ball.vx < 0) and (self.ball.rect.left <= self.l_pad.rect.right)):
-            left_collision = True
-        elif ((self.ball.vx > 0) and (self.ball.rect.right >= self.r_pad.rect.left)):
-            right_collision = True
+            top_coll = True
+        if ((self.ball.vx < 0) \
+        and (self.ball.rect.left <= self.l_pad.rect.right)):
+            l_coll = True
+        elif ((self.ball.vx > 0) \
+        and (self.ball.rect.right >= self.r_pad.rect.left)):
+            r_coll = True
                 
-        return bottom_collision, top_collision, left_collision, right_collision
+        return bot_coll, top_coll, l_coll, r_coll
 
     def handle_collision(self, goal_to_be):
         """
@@ -288,18 +345,18 @@ class Game():
         ...on the collision point.
         """
         
-        bottom_collision, top_collision, left_collision, right_collision = self.check_collision()
+        bot_coll, top_coll, l_coll, r_coll = self.check_collision()
         
         # Left paddle possible collision case
-        if (left_collision and goal_to_be == False):
+        if (l_coll and goal_to_be == False):
             # Ball also colliding with bottom wall
-            if bottom_collision:
+            if bot_coll:
                 y_mod = self.win_h - self.ball.r  
             # Ball also colliding with top wall
-            elif top_collision:
+            elif top_coll:
                 y_mod = self.ball.r
             # Neef to determine which collision would arrive first: top/bottom wall or left paddle ?
-            if bottom_collision or top_collision:
+            if bot_coll or top_coll:
                 x_mod = int(self.ball.rect.centerx - ((self.ball.vx * (self.ball.rect.centery - y_mod)) / self.ball.vy))
                 # Top/bottom wall collision first :
                 if x_mod > (self.l_pad.rect.right):
@@ -315,15 +372,15 @@ class Game():
                 goal_to_be = self.handle_left_collision(goal_to_be)
 
         # Right paddle possible collision case
-        elif (right_collision and goal_to_be == False):
+        elif (r_coll and goal_to_be == False):
             # Ball also colliding with bottom wall
-            if bottom_collision:
+            if bot_coll:
                 y_mod = self.win_h - self.ball.r  
             # Ball also colliding with top wall
-            elif top_collision:
+            elif top_coll:
                 y_mod = self.ball.r
             # Neef to determine which collision would arrive first: top/bottom wall or right paddle ?
-            if bottom_collision or top_collision:
+            if bot_coll or top_coll:
                 x_mod = int(self.ball.rect.centerx - ((self.ball.vx * (self.ball.rect.centery - y_mod)) / self.ball.vy))
                 # Top/bottom wall collision first :
                 if x_mod < self.r_pad.x:
@@ -339,14 +396,14 @@ class Game():
                 goal_to_be = self.handle_right_collision(goal_to_be)
         
         # No possible collision with paddles, but just with top or bottom walls
-        elif (bottom_collision or top_collision):
+        elif (bot_coll or top_coll):
             self.handle_top_bottom_collision()
 
         return goal_to_be
 
-    #------------------------------------------------------------------------------
+    #-------------------------------------------------------------------
     # GAME STATES
-    #------------------------------------------------------------------------------    
+    #-------------------------------------------------------------------   
 
     def welcome(self):
         """
@@ -357,7 +414,7 @@ class Game():
         # Managing display:
         self.win.fill(self.BLACK)
         pygame.draw.circle(self.win, self.WHITE, (self.win_w//2, self.win_h//2), self.WELCOME_RADIUS_RATIO * self.win_h)
-        skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "SKATEPONG", self.win_w // 2, self.win_h // 2, self.BLACK)
+        skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "SKATEPONG", self.win_w // 2, self.win_h // 2, self.BLACK)
         pygame.display.update()
         
         current_time = time.time()
@@ -383,14 +440,14 @@ class Game():
         while both_gyros_connected != True:
             
             try:
-                l_gyro = skatepong.gyro.Gyro_one_axis(skatepong.gyro.Gyro_one_axis.I2C_ADDRESS_1, 'y', self.GYRO_SENSITIVITY)
+                l_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_1, 'y', self.GYRO_SENSITIVITY)
             except IOError:
                 l_gyro_connected = False
             else:
                 l_gyro_connected = True
             
             try:
-                r_gyro = skatepong.gyro.Gyro_one_axis(skatepong.gyro.Gyro_one_axis.I2C_ADDRESS_2, 'y', self.GYRO_SENSITIVITY)
+                r_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_2, 'y', self.GYRO_SENSITIVITY)
             except IOError:
                 r_gyro_connected = False
             else:
@@ -408,7 +465,7 @@ class Game():
                     message = "Left skateboard NOT connected"
                 else:
                     message = "Please connect skateboards"
-                skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), message, self.win_w // 2, self.win_h // 2, self.WHITE)
+                skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), message, self.win_w // 2, self.win_h // 2, self.WHITE)
                 pygame.display.update()
         
         self.l_gyro = l_gyro
@@ -453,8 +510,8 @@ class Game():
             
             # Managing display:
             self.win.fill(self.BLACK)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), message, self.win_w // 2, self.win_h // 4, self.WHITE)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "MOVE SKATES TO START", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), message, self.win_w // 2, self.win_h // 4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "MOVE SKATES TO START", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
             pygame.display.update()
             
@@ -502,7 +559,7 @@ class Game():
 
             # Managing display:
             self.win.fill(self.BLACK)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_2 * self.win_h), str(time_before_start), self.win_w // 2, self.win_h // 4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_2 * self.win_h), str(time_before_start), self.win_w // 2, self.win_h // 4, self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
             pygame.display.update()
 
@@ -590,7 +647,7 @@ class Game():
             # Managing display:
             self.win.fill(self.BLACK)
             self.draw_game_objects(draw_pads = True, draw_ball = False, draw_scores = True, draw_line = False)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_15 * self.win_h), message, self.win_w // 2, self.win_h // 2, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_15 * self.win_h), message, self.win_w // 2, self.win_h // 2, self.WHITE)
             pygame.display.update()
 
             current_time = time.time()
@@ -630,9 +687,9 @@ class Game():
             
             # Managing display:
             self.win.fill(self.BLACK)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "CALIBRATION IS ABOUT TO START", self.win_w // 2, self.win_h // 4, self.WHITE)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_2 * self.win_h), str(time_before_start), self.win_w // 2, self.win_h // 2, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "CALIBRATION IS ABOUT TO START", self.win_w // 2, self.win_h // 4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_2 * self.win_h), str(time_before_start), self.win_w // 2, self.win_h // 2, self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = False, draw_scores = False, draw_line = False)
             pygame.display.update()
             
@@ -642,8 +699,8 @@ class Game():
         
         # Managing display:
         self.win.fill(self.BLACK)
-        skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "CALIBRATION ONGOING...", self.win_w // 2, self.win_h // 4, self.WHITE)
-        skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
+        skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "CALIBRATION ONGOING...", self.win_w // 2, self.win_h // 4, self.WHITE)
+        skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
         self.draw_game_objects(draw_pads = True, draw_ball = False, draw_scores = False)
         pygame.display.update()
         # Gyroscope offset measurement:
@@ -677,9 +734,9 @@ class Game():
             
             # Managing display:
             self.win.fill(self.BLACK)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "CALIBRATION DONE", self.win_w // 2, self.win_h // 4, self.WHITE)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "MOVE SKATES TO TEST CALIBRATION", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
-            skatepong.tools.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_2 *self. win_h), str(time_before_start), self.win_w // 2, self.win_h // 2, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_1 * self.win_h), "CALIBRATION DONE", self.win_w // 2, self.win_h // 4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_05 * self.win_h), "MOVE SKATES TO TEST CALIBRATION", self.win_w // 2, (self.win_h * 3) // 4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FONT_NAME, int(self.FONT_RATIO_0_2 *self. win_h), str(time_before_start), self.win_w // 2, self.win_h // 2, self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = False, draw_scores = False)
             pygame.display.update()
             

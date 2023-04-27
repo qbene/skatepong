@@ -66,20 +66,20 @@ class Gyro_one_axis(mpu6050):
         while i <= nb_calib_pts:
             if i == 1:
                 print("Gyroscope average offset (" + self.axis + \
-                " axis) calculation ongoing...")
+                      " axis) calculation ongoing...")
             gyro_sum += self.get_data()
             i += 1
         gyro_offset = gyro_sum / nb_calib_pts
         print("Gyroscope average offset measured ("+ self.axis + \
-        " axis) :", str(round(gyro_offset, 2)))
+              " axis) :", str(round(gyro_offset, 2)))
         self.offset = gyro_offset
         return gyro_offset
     
 def main():
     gyro_1 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', \
-    mpu6050.GYRO_RANGE_500DEG)
+             mpu6050.GYRO_RANGE_500DEG)
     gyro_2 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', \
-    mpu6050.GYRO_RANGE_500DEG)
+             mpu6050.GYRO_RANGE_500DEG)
 
     print("Gyroscope 1 :")
     print("Sensitivity:", str(gyro_1.numerical_sensitivity), "deg/s")
@@ -94,11 +94,11 @@ def main():
         gyro_1_calibrated = gyro_1_raw - gyro_1_offset
         gyro_2_calibrated = gyro_2_raw - gyro_2_offset
         print("Gyro 1 (" + gyro_1.axis + " axis) => Raw data :", \
-        str(round(gyro_1_raw,2)), "/ Calibrated data :", \
-        str(round(gyro_1_calibrated,2)))
+              str(round(gyro_1_raw,2)), "/ Calibrated data :", \
+              str(round(gyro_1_calibrated,2)))
         print("Gyro 2 (" + gyro_2.axis + " axis) => Raw data :", \
-        str(round(gyro_2_raw,2)), "/ Calibrated data :", \
-        str(round(gyro_2_calibrated,2)))
+              str(round(gyro_2_raw,2)), "/ Calibrated data :", \
+              str(round(gyro_2_calibrated,2)))
         print("-------------------------------")
         time.sleep(1/20)
 
