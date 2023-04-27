@@ -75,7 +75,7 @@ class Game():
     SCORE_Y_OFFSET_RATIO = 0.02 # Rat. disp. h - frame vertical offset
     CENTER_CROSS_MULTIPLIER = 3 # Mid line thikness factor [2 - 5]
     # Text fonts parameters (names and sizes)
-    FONT_NAME = "comicsans" # Font used for texts
+    FONT_NAME = "comicsans" # or 'quicksandmedium'. Font used for texts.
     FONT_RATIO_0_05 = 0.05 # Rat. disp. h
     FONT_RATIO_0_1 = 0.1 # Rat. disp. h
     FONT_RATIO_0_15 = 0.15 # Rat. disp. h
@@ -121,7 +121,9 @@ class Game():
         disp_w = pygame.display.Info().current_w # Disp. width (px)
         disp_h = pygame.display.Info().current_h # Disp. height (px)
         # Resolution limitation to avoid lags with resolution 1920x1080
+        print ("Display resolution :", disp_w, disp_h) 
         if disp_w == 1920 and disp_h == 1080:
+            print ("Resolution reduction needed")
             disp_w = 1280
             disp_h = 720
         if self.full_screen == False:
@@ -130,7 +132,9 @@ class Game():
         else:
             #win = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
             win = pygame.display.set_mode([disp_w, disp_h], pygame.FULLSCREEN)
+        time.sleep(1/2)
         win_w , win_h = pygame.display.get_surface().get_size()
+        print ("Game resolution :", win_w, win_h) 
         return win, win_w, win_h
         
     def comp_font_sizes(self):
@@ -443,14 +447,23 @@ class Game():
         current_time = time.time()
         
         # Managing display:
-        self.win.fill(self.BLACK)
-        r = int(self.WELCOME_RADIUS_RATIO * self.win_h)
-        pygame.draw.circle(self.win, self.WHITE, (self.x_1_2, self.y_1_2), r)
-        font_nm = self.FONT_NAME
-        txt = "SKATEPONG"
-        skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, \
-                          self.x_1_2, self.y_1_2, self.BLACK)
-        pygame.display.update()
+        """
+        Try loop added to bypass display error that occurs sometines \
+        at startup when display resolution needs to be reduced.
+        """
+        try:
+            self.win.fill(self.BLACK)
+            r = int(self.WELCOME_RADIUS_RATIO * self.win_h)
+            pygame.draw.circle(self.win, self.WHITE, (self.x_1_2, self.y_1_2), r)
+            font_nm = self.FONT_NAME
+            txt = "SKATEPONG"
+            skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, \
+                              self.x_1_2, self.y_1_2, self.BLACK)
+            pygame.display.update()
+        except:
+            print ("Reinitializing display...")
+            self.win, self.win_w, self.win_h = self.create_window()
+            self.welcome()
         
         while current_time - start_time < self.DELAY_WELCOME: 
             self.clock.tick(self.FPS)
