@@ -90,7 +90,9 @@ class Paddle():
         else:
             self.gyro.ready_for_reinit = True
             gyro_calib = gyro_raw - self.gyro.offset
-            vy = int(gyro_calib / self.gyro.numerical_sensitivity * \
+            # vy => Negative signe added to have correct pad \
+            # displacement based on physical installation on skateboards
+            vy = - int(gyro_calib / self.gyro.numerical_sensitivity * \
                      self.win_h * vy_factor)
             
             """
