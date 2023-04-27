@@ -2,14 +2,12 @@
 name = "skatepong"
 version = "0.1.0"
 description = "skatepong game with paddles controlled via gyroscopes mounted under real skateboards"
-authors = ["Quem"]
+authors = ["Quentin BENETHUILLERE, quentin.benethuillere@gmail.com"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
 pygame = "^2.3.0"
-#pygame = "1.9.6"
-#pygame = "2.0.0"
 mpu6050-raspberrypi = "^1.2"
 smbus = "^1.1.post2"
 smbus2 = "^0.4.2"
