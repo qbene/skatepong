@@ -43,8 +43,8 @@ class Game():
     #-------------------------------------------------------------------
     
     # Main game parameters 
-    WINNING_SCORE = 3 # Number of goals to win the game
-    BALL_ANGLE_MAX = 60 # Max angle after paddle collision (deg) [30-75]
+    WINNING_SCORE = 10 # Number of goals to win the game
+    BALL_ANGLE_MAX = 55 # Max angle after paddle collision (deg) [30-75]
     VELOCITY_ANGLE_FACTOR = 2.5 # Higher ball velocity when angle [2 - 3]
     # Delays
     DELAY_WELCOME = 3 # Splash screen duration (s)
@@ -70,7 +70,7 @@ class Game():
     PAD_X_OFFSET_RATIO = 0.02 # Rat. disp. w [0.01 - 0.02] frame offset
     BALL_RADIUS_RATIO = 0.02 # Rat. min disp. w/h [0.01 - 0.04]
     PAD_FLAT_BOUNCE_RATIO = 0.01 # Rat. disp. w [0.005 - 0.02]
-    BALL_V_RATIO = 0.025 # Rat. disp. w [0.005 - 0.025]
+    BALL_V_RATIO = 0.03 # Rat. disp. w [0.01 - 0.035]
     MID_LINE_WIDTH_RATIO = 0.006 # Rat. disp. w [0.005 - 0.01]
     SCORE_Y_OFFSET_RATIO = 0.02 # Rat. disp. h - frame vertical offset
     CENTER_CROSS_MULTIPLIER = 3 # Mid line thikness factor [2 - 5]
@@ -289,7 +289,8 @@ class Game():
                 # Bounce angle calculation
                 if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w)\
                 and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_w)):
-                    self.ball.vx = self.ball.vx_straight                    
+                    self.ball.vx = self.ball.vx_straight
+                    self.ball.vy = 0
                 else:
                     angle = round((y_mod - y_pad_mid) / (self.l_pad.h / 2) * self.BALL_ANGLE_MAX)
                     # Constant speed
@@ -322,6 +323,7 @@ class Game():
                 if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w) \
                 and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_w)):
                     self.ball.vx = -self.ball.vx_straight
+                    self.ball.vy = 0
                 else:
                     angle = round((y_mod - y_pad_mid) / (self.r_pad.h / 2) * self.BALL_ANGLE_MAX)
                     # Constant speed
@@ -443,8 +445,7 @@ class Game():
         # Managing display:
         self.win.fill(self.BLACK)
         r = int(self.WELCOME_RADIUS_RATIO * self.win_h)
-        pygame.draw.circle(self.win, self.WHITE, \
-                          (self.x_1_2, self.y_1_2), r)
+        pygame.draw.circle(self.win, self.WHITE, (self.x_1_2, self.y_1_2), r)
         font_nm = self.FONT_NAME
         txt = "SKATEPONG"
         skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, \
