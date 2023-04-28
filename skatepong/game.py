@@ -43,7 +43,7 @@ class Game():
     #-------------------------------------------------------------------
     
     # Main game parameters 
-    WINNING_SCORE = 10 # Number of goals to win the game
+    WINNING_SCORE = 3 # Number of goals to win the game
     BALL_ANGLE_MAX = 55 # Max angle after paddle collision (deg) [30-75]
     VELOCITY_ANGLE_FACTOR = 2.5 # Higher ball velocity when angle [2 - 3]
     # Delays
@@ -58,10 +58,10 @@ class Game():
     GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_500DEG
     """
     For GYRO_SENSITIVITY, use one of the following constants:
-    mpu6050.GYRO_RANGE_250DEG = 0x00 # +/- 250 deg/s
-    mpu6050.GYRO_RANGE_500DEG = 0x08 # +/- 500 deg/s
-    mpu6050.GYRO_RANGE_1000DEG = 0x10 # +/- 1000 deg/s
-    mpu6050.GYRO_RANGE_2000DEG = 0x18 # +/- 2000 deg/s
+    mpu6050.GYRO_RANGE_250DEG = 0x00 # +/- 125 deg/s
+    mpu6050.GYRO_RANGE_500DEG = 0x08 # +/- 250 deg/s
+    mpu6050.GYRO_RANGE_1000DEG = 0x10 # +/- 500 deg/s
+    mpu6050.GYRO_RANGE_2000DEG = 0x18 # +/- 1000 deg/s
     """
     # Sizes ([indicates recommended values])
     WELCOME_RADIUS_RATIO = 0.25 # Rat. disp. h [0.1 - 0.5]
@@ -75,11 +75,7 @@ class Game():
     SCORE_Y_OFFSET_RATIO = 0.02 # Rat. disp. h - frame vertical offset
     CENTER_CROSS_MULTIPLIER = 3 # Mid line thikness factor [2 - 5]
     # Text fonts parameters (names and sizes)
-    FONT_NAME = "comicsans" # or 'quicksandmedium'. Font used for texts.
-    FONT_RATIO_0_05 = 0.05 # Rat. disp. h
-    FONT_RATIO_0_1 = 0.1 # Rat. disp. h
-    FONT_RATIO_0_15 = 0.15 # Rat. disp. h
-    FONT_RATIO_0_2 = 0.2 # Rat. disp. h
+    FT_NM = "comicsans" # or 'quicksandmedium'. Font used for texts.
 
     #-------------------------------------------------------------------
     # CONSTANTS
@@ -107,9 +103,10 @@ class Game():
         self.r_score = r_score
         self.full_screen = full_screen
         self.win, self.win_w, self.win_h = self.create_window()
-        self.comp_font_sizes()
-        self.comp_common_coordinates()
-        
+        self.ft_dic = skt_tls.comp_font_sizes(self.win_h)
+        self.x_dic, self.y_dic = skt_tls.comp_common_coordinates( \
+                                 self.win_w, self.win_h)
+
     #-------------------------------------------------------------------
     # SIDE FUNCTIONS
     #-------------------------------------------------------------------
@@ -136,26 +133,6 @@ class Game():
         win_w , win_h = pygame.display.get_surface().get_size()
         print ("Game resolution :", win_w, win_h) 
         return win, win_w, win_h
-        
-    def comp_font_sizes(self):
-        """
-        Computes different font sizes.
-        """
-        self.ft_0_05 = int(0.05 * self.win_h)
-        self.ft_0_1 = int(0.1 * self.win_h)
-        self.ft_0_15 = int(0.15 * self.win_h)
-        self.ft_0_2 = int(0.2 * self.win_h)
-        
-    def comp_common_coordinates(self):
-        """
-        Computes commonly used coordinates to position elements
-        """
-        self.x_1_2 = self.win_w // 2
-        self.x_1_4 = self.win_w // 4
-        self.x_3_4 = (self.win_w * 3) // 4
-        self.y_1_2 = self.win_h // 2
-        self.y_1_4 = self.win_h // 4
-        self.y_3_4 = (self.win_h * 3) // 4
 
     def comp_elem_sizes(self):
         """
@@ -183,7 +160,7 @@ class Game():
                      pad_y, pad_w, pad_h, self.WHITE, self.l_gyro)
         self.r_pad = skt_obj.Paddle(self.win, self.win_h, r_pad_x, \
                      pad_y, pad_w, pad_h, self.WHITE, self.r_gyro)
-        self.ball = skt_obj.Ball(self.win, self.x_1_2, self.y_1_2, \
+        self.ball = skt_obj.Ball(self.win, self.x_dic["1/2"], self.y_dic["1/2"], \
                     ball_r, self.WHITE, ball_vx_straight, 0, 0)
 
     def reinitialize_gyro_if_needed(self):
@@ -212,14 +189,14 @@ class Game():
         Note : Each game scene do not require every single game object 
         """
         if draw_scores == True:
-            font_nm = self.FONT_NAME
-            y = int(self.FONT_RATIO_0_1 * self.win_h) # 1 font sz offset
+            font_nm = self.FT_NM
+            y = self.ft_dic["0.10"] # 1 font sz offset
             txt = str(self.l_score)
-            skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, \
-                  self.x_1_4, y, self.WHITE)
+            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], txt, \
+                  self.x_dic["1/4"], y, self.WHITE)
             txt = str(self.r_score)
-            skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, \
-                              self.x_3_4, y, self.WHITE)
+            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], txt, \
+                              self.x_dic["3/4"], y, self.WHITE)
         if draw_line == True:        
             thick = int(self.win_w * self.MID_LINE_WIDTH_RATIO)
             horiz_w_factor = self.CENTER_CROSS_MULTIPLIER
@@ -454,11 +431,11 @@ class Game():
         try:
             self.win.fill(self.BLACK)
             r = int(self.WELCOME_RADIUS_RATIO * self.win_h)
-            pygame.draw.circle(self.win, self.WHITE, (self.x_1_2, self.y_1_2), r)
-            font_nm = self.FONT_NAME
+            pygame.draw.circle(self.win, self.WHITE, (self.x_dic["1/2"], self.y_dic["1/2"]), r)
+            font_nm = self.FT_NM
             txt = "SKATEPONG"
-            skt_tls.draw_text(self.win, font_nm, self.ft_0_1, txt, \
-                              self.x_1_2, self.y_1_2, self.BLACK)
+            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], txt, \
+                              self.x_dic["1/2"], self.y_dic["1/2"], self.BLACK)
             pygame.display.update()
         except:
             print ("Reinitializing display...")
@@ -480,6 +457,9 @@ class Game():
         """
         l_gyro_connected = False
         r_gyro_connected = False
+        self.win.fill(self.BLACK)
+        msg = ""
+        font_nm = self.FT_NM
         while not (l_gyro_connected and r_gyro_connected):
             # Left gyro test :
             try:
@@ -498,19 +478,23 @@ class Game():
             else:
                 r_gyro_connected = True
             # Case with at least one gyro not connected:
+                #                  self.x_dic["1/2"], self.y_dic["1/2"], self.WHITE)
+            txt_rect_old = skt_tls.draw_text_2(self.win, font_nm, self.ft_dic["0.10"], msg, \
+                                  self.x_dic["1/2"], self.y_dic["1/2"], self.BLACK, self.BLACK)
             if not (l_gyro_connected and r_gyro_connected):
                 # Managing display:
-                self.win.fill(self.BLACK)
+                #self.win.fill(self.BLACK)
                 if l_gyro_connected == True:
                     msg = "Right skateboard NOT connected"
                 elif r_gyro_connected == True:
                     msg = "Left skateboard NOT connected"
                 else:
                     msg = "Please connect skateboards"
-                font_nm = self.FONT_NAME
-                skt_tls.draw_text(self.win, font_nm, self.ft_0_1, msg, \
-                                  self.x_1_2, self.y_1_2, self.WHITE)
-                pygame.display.update()
+                #skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], msg, \
+                txt_rect = skt_tls.draw_text_2(self.win, font_nm, self.ft_dic["0.10"], msg, \
+                                  self.x_dic["1/2"], self.y_dic["1/2"], self.WHITE)
+                pygame.display.update([txt_rect_old, txt_rect])
+                #pygame.display.update()
         
         self.l_gyro = l_gyro
         self.r_gyro = r_gyro
@@ -553,12 +537,12 @@ class Game():
             
             # Managing display:
             self.win.fill(self.BLACK)
-            font_nm = self.FONT_NAME
-            skt_tls.draw_text(self.win, font_nm, self.ft_0_1, msg, \
-                              self.x_1_2, self.y_1_4, self.WHITE)
+            font_nm = self.FT_NM
+            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], msg, \
+                              self.x_dic["1/2"], self.y_dic["1/4"], self.WHITE)
             txt = "MOVE SKATES TO START"
-            skt_tls.draw_text(self.win, font_nm, self.ft_0_05, txt, \
-                              self.x_1_2, self.y_3_4, self.WHITE)
+            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.05"], txt, \
+                              self.x_dic["1/2"], self.y_dic["3/4"], self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = True, \
                                 draw_scores = False, draw_line = False)
             pygame.display.update()
@@ -608,10 +592,10 @@ class Game():
 
             # Managing display:
             self.win.fill(self.BLACK)
-            font_nm = self.FONT_NAME
+            font_nm = self.FT_NM
             txt = str(time_before_start)
-            skt_tls.draw_text(self.win, font_nm, self.ft_0_2, txt, 
-                              self.x_1_2, self.y_1_4, self.WHITE)
+            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.20"], txt, 
+                              self.x_dic["1/2"], self.y_dic["1/4"], self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = True, \
                                 draw_scores = False, draw_line = False)
             pygame.display.update()
@@ -701,11 +685,11 @@ class Game():
 
             # Managing display:
             self.win.fill(self.BLACK)
-            font_nm = self.FONT_NAME
+            font_nm = self.FT_NM
             self.draw_game_objects(draw_pads = True, draw_ball = False,\
                                   draw_scores = True, draw_line = False)
-            skt_tls.draw_text(self.win, font_nm, self.ft_0_15, msg, \
-                              self.x_1_2, self.y_1_2, self.WHITE)
+            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.15"], msg, \
+                              self.x_dic["1/2"], self.y_dic["1/2"], self.WHITE)
             pygame.display.update()
 
             current_time = time.time()
@@ -746,14 +730,14 @@ class Game():
             # Managing display:
             self.win.fill(self.BLACK)
             txt = "CALIBRATION IS ABOUT TO START"
-            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_1, \
-                              txt, self.x_1_2, self.y_1_4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], \
+                              txt, self.x_dic["1/2"], self.y_dic["1/4"], self.WHITE)
             txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"                    
-            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_05, \
-                              txt, self.x_1_2, self.y_3_4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
+                              txt, self.x_dic["1/2"], self.y_dic["3/4"], self.WHITE)
             txt = str(time_before_start)         
-            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_2, \
-                              txt, self.x_1_2, self.y_1_2, self.WHITE)
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.20"], \
+                              txt, self.x_dic["1/2"], self.y_dic["1/2"], self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = False,\
                                 draw_scores = False, draw_line = False)
             pygame.display.update()
@@ -766,11 +750,11 @@ class Game():
         self.win.fill(self.BLACK)
         
         txt = "CALIBRATION ONGOING..."
-        skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_1, \
-                          txt, self.x_1_2, self.y_1_4, self.WHITE)
+        skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], \
+                          txt, self.x_dic["1/2"], self.y_dic["1/4"], self.WHITE)
         txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"                  
-        skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_05, \
-                          txt, self.x_1_2, self.y_3_4, self.WHITE)
+        skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
+                          txt, self.x_dic["1/2"], self.y_dic["3/4"], self.WHITE)
         self.draw_game_objects(draw_pads = True, draw_ball = False, \
                               draw_scores = False, draw_line = False)
         pygame.display.update()
@@ -806,14 +790,14 @@ class Game():
             # Managing display:
             self.win.fill(self.BLACK)
             txt = "CALIBRATION DONE"
-            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_1, \
-                              txt, self.x_1_2, self.y_1_4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], \
+                              txt, self.x_dic["1/2"], self.y_dic["1/4"], self.WHITE)
             txt = "MOVE SKATES TO TEST CALIBRATION"            
-            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_05, \
-                              txt, self.x_1_2, self.y_3_4, self.WHITE)
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
+                              txt, self.x_dic["1/2"], self.y_dic["3/4"], self.WHITE)
             txt = str(time_before_start)   
-            skt_tls.draw_text(self.win, self.FONT_NAME, self.ft_0_2, \
-                              txt, self.x_1_2, self.y_1_2, self.WHITE)
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.20"], \
+                              txt, self.x_dic["1/2"], self.y_dic["1/2"], self.WHITE)
             
             self.draw_game_objects(draw_pads = True, draw_ball = False,\
                                 draw_scores = False, draw_line = False)

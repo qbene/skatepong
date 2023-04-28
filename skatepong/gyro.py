@@ -24,10 +24,10 @@ class Gyro_one_axis(mpu6050):
         self.sensitivity = sensitivity # Used for gyroscope init
         """
         For sensitivity, use one of the following constants:
-        mpu6050.GYRO_RANGE_250DEG = 0x00 # +/- 250 deg/s
-        mpu6050.GYRO_RANGE_500DEG = 0x08 # +/- 500 deg/s
-        mpu6050.GYRO_RANGE_1000DEG = 0x10 # +/- 1000 deg/s
-        mpu6050.GYRO_RANGE_2000DEG = 0x18 # +/- 2000 deg/s
+        mpu6050.GYRO_RANGE_250DEG = 0x00 # +/- 125 deg/s
+        mpu6050.GYRO_RANGE_500DEG = 0x08 # +/- 250 deg/s
+        mpu6050.GYRO_RANGE_1000DEG = 0x10 # +/- 500 deg/s
+        mpu6050.GYRO_RANGE_2000DEG = 0x18 # +/- 1000 deg/s
         """
         self.get_numerical_sensitivity() # Used for paddles velocity
         self.offset = 0
