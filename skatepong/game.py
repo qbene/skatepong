@@ -189,13 +189,13 @@ class Game():
         Note : Each game scene do not require every single game object 
         """
         if draw_scores == True:
-            font_nm = self.FT_NM
+            self.FT_NM = self.FT_NM
             y = self.ft_dic["0.10"] # 1 font sz offset
             txt = str(self.l_score)
-            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], txt, \
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt, \
                   self.x_dic["1/4"], y, self.WHITE)
             txt = str(self.r_score)
-            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], txt, \
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt, \
                               self.x_dic["3/4"], y, self.WHITE)
         if draw_line == True:        
             thick = int(self.win_w * self.MID_LINE_WIDTH_RATIO)
@@ -432,9 +432,8 @@ class Game():
             self.win.fill(self.BLACK)
             r = int(self.WELCOME_RADIUS_RATIO * self.win_h)
             pygame.draw.circle(self.win, self.WHITE, (self.x_dic["1/2"], self.y_dic["1/2"]), r)
-            font_nm = self.FT_NM
             txt = "SKATEPONG"
-            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], txt, \
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt, \
                               self.x_dic["1/2"], self.y_dic["1/2"], self.BLACK)
             pygame.display.update()
         except:
@@ -458,9 +457,17 @@ class Game():
         l_gyro_connected = False
         r_gyro_connected = False
         self.win.fill(self.BLACK)
-        msg = ""
-        font_nm = self.FT_NM
+        status = 0
+        txt_1 = "Right skateboard NOT connected"
+        txt_2 = "Left skateboard NOT connected"
+        txt_3 = "Please connect skateboards"
+        max_w_txt = skt_tls.get_max_w_txt(self.FT_NM, self.ft_dic["0.10"], txt_1, txt_2, txt_3)
+        # Reinitializing display:
+        self.win.fill(self.BLACK)
+        pygame.display.update()
+        
         while not (l_gyro_connected and r_gyro_connected):
+            prev_status = status
             # Left gyro test :
             try:
                 l_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_1, \
@@ -477,24 +484,29 @@ class Game():
                 r_gyro_connected = False
             else:
                 r_gyro_connected = True
-            # Case with at least one gyro not connected:
-                #                  self.x_dic["1/2"], self.y_dic["1/2"], self.WHITE)
-            txt_rect_old = skt_tls.draw_text_2(self.win, font_nm, self.ft_dic["0.10"], msg, \
-                                  self.x_dic["1/2"], self.y_dic["1/2"], self.BLACK, self.BLACK)
+            # Status summary :
             if not (l_gyro_connected and r_gyro_connected):
-                # Managing display:
-                #self.win.fill(self.BLACK)
                 if l_gyro_connected == True:
-                    msg = "Right skateboard NOT connected"
+                    status = 1
                 elif r_gyro_connected == True:
-                    msg = "Left skateboard NOT connected"
+                    status = 2
                 else:
-                    msg = "Please connect skateboards"
-                #skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], msg, \
-                txt_rect = skt_tls.draw_text_2(self.win, font_nm, self.ft_dic["0.10"], msg, \
+                    status = 3
+            # If status has changed :
+            if status != prev_status:
+                if status == 1:
+                    txt = txt_1
+                elif status == 2:
+                    txt = txt_2
+                elif status == 3:
+                    txt = txt_3
+                # Black rect above max text area + new text displayed.
+                txt_max_rect = pygame.Rect(0, 0, max_w_txt, self.ft_dic["0.10"])
+                txt_max_rect.center = (self.x_dic["1/2"], self.y_dic["1/2"])
+                txt_max_rect = pygame.draw.rect(self.win, self.BLACK, txt_max_rect)
+                txt_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt, \
                                   self.x_dic["1/2"], self.y_dic["1/2"], self.WHITE)
-                pygame.display.update([txt_rect_old, txt_rect])
-                #pygame.display.update()
+                pygame.display.update([txt_max_rect, txt_rect])
         
         self.l_gyro = l_gyro
         self.r_gyro = r_gyro
@@ -537,11 +549,10 @@ class Game():
             
             # Managing display:
             self.win.fill(self.BLACK)
-            font_nm = self.FT_NM
-            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.10"], msg, \
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], msg, \
                               self.x_dic["1/2"], self.y_dic["1/4"], self.WHITE)
             txt = "MOVE SKATES TO START"
-            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.05"], txt, \
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], txt, \
                               self.x_dic["1/2"], self.y_dic["3/4"], self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = True, \
                                 draw_scores = False, draw_line = False)
@@ -592,9 +603,8 @@ class Game():
 
             # Managing display:
             self.win.fill(self.BLACK)
-            font_nm = self.FT_NM
             txt = str(time_before_start)
-            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.20"], txt, 
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.20"], txt, 
                               self.x_dic["1/2"], self.y_dic["1/4"], self.WHITE)
             self.draw_game_objects(draw_pads = True, draw_ball = True, \
                                 draw_scores = False, draw_line = False)
@@ -685,10 +695,9 @@ class Game():
 
             # Managing display:
             self.win.fill(self.BLACK)
-            font_nm = self.FT_NM
             self.draw_game_objects(draw_pads = True, draw_ball = False,\
                                   draw_scores = True, draw_line = False)
-            skt_tls.draw_text(self.win, font_nm, self.ft_dic["0.15"], msg, \
+            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.15"], msg, \
                               self.x_dic["1/2"], self.y_dic["1/2"], self.WHITE)
             pygame.display.update()
 

@@ -35,6 +35,22 @@ def draw_text_2(win, font_nm, font_sz, txt, x, y, color, bg_color = None):
     win.blit(txt_surf, txt_rect)
     return txt_rect
     
+def get_max_w_txt(font_nm, font_sz, *txts):
+    """
+    Returns the maximum width (px) of the texts given as argmuments.
+    """
+    color = (255,255,255) # text color. Whatever because no display here
+    font = pygame.font.SysFont(font_nm, font_sz)
+    max_w_txt = 0
+    for txt in txts:
+        txt_surf = font.render(txt, True, color)
+        txt_w = txt_surf.get_width()
+        #print (txt_w)
+        if txt_w > max_w_txt:
+            max_w_txt = txt_w
+    #print ("Max text width :", max_w_txt)
+    return max_w_txt
+    
     
 def draw_mid_line(win, win_w, win_h, thick, horiz_w_factor, color):
     """
@@ -83,3 +99,13 @@ def comp_common_coordinates(win_w, win_h):
     self.y_1_4 = self.win_h // 4
     self.y_3_4 = (self.win_h * 3) // 4
     """
+
+def main():
+    """
+    Function for test purposes only
+    """
+    pygame.init()
+    get_max_w_txt("comicsans", 10, "Hello", "Move Skate", "Left")
+
+if __name__ == '__main__':
+    main()
