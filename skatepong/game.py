@@ -458,12 +458,12 @@ class Game():
         status = 0
         l_gyro_connected = False
         r_gyro_connected = False
-        txt_fr_1 = "Veuillez connecter la planche gauche"
-        txt_en_1 = "Please connect left skateboard"
-        txt_fr_2 = "Veuillez connecter la planche droite"
-        txt_en_2 = "Please connect right skateboard"
-        txt_fr_3 = "Veuillez connecter les planches"
-        txt_en_3 = "Please connect skateboards"
+        txt_fr_1 = "VEUILLEZ CONNECTER LA PLANCHE GAUCHE"
+        txt_en_1 = "PLEASE CONNECT LEFT SKATEBOARD"
+        txt_fr_2 = "VEUILLEZ CONNECTER LA PLANCHE DROITE"
+        txt_en_2 = "PLEASE CONNECT RIGHT SKATEBOARD"
+        txt_fr_3 = "VEUILLEZ CONNECTER LES PLANCHES"
+        txt_en_3 = "PLEASE CONNECT SKATEBOARDs"
         max_w_txt_fr = skt_tls.get_max_w_txt(self.FT_NM, \
                       self.ft_dic["0.10"], txt_fr_1, txt_fr_2, txt_fr_3)
         max_w_txt_en = skt_tls.get_max_w_txt(self.FT_NM, \
@@ -473,6 +473,9 @@ class Game():
         pygame.display.update()
         
         while not (l_gyro_connected and r_gyro_connected):
+            
+            self.clock.tick(self.FPS)
+            
             l_gyro_connected = False
             r_gyro_connected = False
             prev_status = status
@@ -499,13 +502,13 @@ class Game():
                 r_gyro_connected = True
             # Status summary :
             if not (l_gyro_connected and r_gyro_connected):
-                if l_gyro_connected == True:
+                if r_gyro_connected == True:
                     status = 1
-                elif r_gyro_connected == True:
+                elif l_gyro_connected == True:
                     status = 2
                 else:
                     status = 3
-            # If status has changed :
+            # Updating display if status has changed :
             if status != prev_status:
                 if status == 1:
                     txt_fr = txt_fr_1
@@ -517,17 +520,17 @@ class Game():
                     txt_fr = txt_fr_3
                     txt_en = txt_en_3
                 # Black rect above max text area + new text displayed.
-                txt_max_rect_fr = pygame.Rect(0, 0, max_w_txt_fr, self.ft_dic["0.10"])
-                txt_max_rect_en = pygame.Rect(0, 0, max_w_txt_en, self.ft_dic["0.10"])
-                txt_max_rect_fr.center = (self.x_dic["0.50"], self.y_dic["0.40"])
-                txt_max_rect_en.center = (self.x_dic["0.50"], self.y_dic["0.60"])
-                txt_max_rect_fr = pygame.draw.rect(self.win, self.BLACK, txt_max_rect_fr)
-                txt_max_rect_en = pygame.draw.rect(self.win, self.BLACK, txt_max_rect_en)
-                txt_rect_fr = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_fr, \
+                txt_fr_max_rect = pygame.Rect(0, 0, max_w_txt_fr, self.ft_dic["0.10"])
+                txt_en_max_rect = pygame.Rect(0, 0, max_w_txt_en, self.ft_dic["0.10"])
+                txt_fr_max_rect.center = (self.x_dic["0.50"], self.y_dic["0.40"])
+                txt_en_max_rect.center = (self.x_dic["0.50"], self.y_dic["0.60"])
+                txt_fr_max_rect = pygame.draw.rect(self.win, self.BLACK, txt_fr_max_rect)
+                txt_en_max_rect = pygame.draw.rect(self.win, self.BLACK, txt_en_max_rect)
+                txt_fr_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_fr, \
                                   self.x_dic["0.50"], self.y_dic["0.40"], self.WHITE)
-                txt_rect_en = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_en, \
+                txt_en_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_en, \
                                   self.x_dic["0.50"], self.y_dic["0.60"], self.GREY)
-                pygame.display.update([txt_max_rect_fr, txt_max_rect_en, txt_rect_fr, txt_rect_en])
+                pygame.display.update([txt_fr_max_rect, txt_en_max_rect, txt_fr_rect, txt_en_rect])
         
         self.l_gyro = l_gyro
         self.r_gyro = r_gyro
@@ -540,14 +543,40 @@ class Game():
         """
         moving_time = time.time()
         current_time = time.time()
+        status = 0
         left_player_ready = False
         right_player_ready = False
         self.ball.reset()
+
+        txt_fr_0 = "PIVOTEZ LES PLANCHES POUR DEBUTER LA PARTIE"
+        txt_en_0 = "MOVE SKATES TO START GAME"        
+        txt_fr_1 = "EN ATTENTE DU JOUEUR GAUCHE"
+        txt_en_1 = "WAITING FOR LEFT PLAYER"
+        txt_fr_2 = "EN ATTENTE DU JOUEUR DROIT"
+        txt_en_2 = "WAITING FOR RIGHT PLAYERS"
+        txt_fr_3 = "EN ATTENTE DES JOUEURS"
+        txt_en_3 = "WAITING FOR PLAYERS"
+
+        max_w_txt_fr = skt_tls.get_max_w_txt(self.FT_NM, \
+                      self.ft_dic["0.10"], txt_fr_1, txt_fr_2, txt_fr_3)
+        max_w_txt_en = skt_tls.get_max_w_txt(self.FT_NM, \
+                      self.ft_dic["0.10"], txt_en_1, txt_en_2, txt_en_3)        
+
+        # Reinitializing display:
+        self.win.fill(self.BLACK)
+        pygame.display.update()
+        # The message below is always displayed until players are ready:
+        txt_fr_0_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.05"], txt_fr_0, \
+                          self.x_dic["0.50"], self.y_dic["0.30"], self.WHITE)
+        txt_en_0_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.05"], txt_en_0, \
+                          self.x_dic["0.50"], self.y_dic["0.80"], self.GREY)
+        pygame.display.update([txt_fr_0_rect, txt_en_0_rect])
         
         while not (left_player_ready and right_player_ready):
 
             self.clock.tick(self.FPS)
-
+            prev_status = status
+                        
             # Checking requests for closing / calibrating / restarting:        
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
@@ -556,28 +585,43 @@ class Game():
             self.reinitialize_gyro_if_needed()
 
             # Going to paddles calibration scene upon user request:
-            #game_status = check_for_pads_calib(keys, game_status)
             if self.game_status == self.SCENE_CALIBRATION:
                 return
             
             if not (left_player_ready and right_player_ready):
                 if right_player_ready == True:
-                    msg = "LEFT PLAYER MISSING"
+                    status = 1
                 elif left_player_ready == True:
-                    msg = "RIGHT PLAYER MISSING"
+                    status = 2
                 else:
-                    msg = "WAITING FOR PLAYERS"
-            
-            # Managing display:
-            self.win.fill(self.BLACK)
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], msg, \
-                              self.x_dic["0.50"], self.y_dic["0.25"], self.WHITE)
-            txt = "MOVE SKATES TO START"
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], txt, \
-                              self.x_dic["0.50"], self.y_dic["0.75"], self.WHITE)
-            self.draw_game_objects(draw_pads = True, draw_ball = True, \
-                                draw_scores = False, draw_line = False)
-            pygame.display.update()
+                    status = 3
+            # Updating display if status has changed :
+            if status != prev_status:
+                if status == 1:
+                    txt_fr = txt_fr_1
+                    txt_en = txt_en_1
+                elif status == 2:
+                    txt_fr = txt_fr_2
+                    txt_en = txt_en_2
+                elif status == 3:
+                    txt_fr = txt_fr_3
+                    txt_en = txt_en_3
+                # Black rect above max text area + new text displayed.
+                txt_fr_max_rect = pygame.Rect(0, 0, max_w_txt_fr, self.ft_dic["0.10"])
+                txt_en_max_rect = pygame.Rect(0, 0, max_w_txt_en, self.ft_dic["0.10"])
+                txt_fr_max_rect.center = (self.x_dic["0.50"], self.y_dic["0.20"])
+                txt_en_max_rect.center = (self.x_dic["0.50"], self.y_dic["0.70"])
+                txt_fr_max_rect = pygame.draw.rect(self.win, self.BLACK, txt_fr_max_rect)
+                txt_en_max_rect = pygame.draw.rect(self.win, self.BLACK, txt_en_max_rect)
+                txt_fr_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_fr, \
+                                  self.x_dic["0.50"], self.y_dic["0.20"], self.WHITE)
+                txt_en_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_en, \
+                                  self.x_dic["0.50"], self.y_dic["0.70"], self.GREY)
+                pygame.display.update([txt_fr_max_rect, txt_en_max_rect, txt_fr_rect, txt_en_rect])
+
+            #self.draw_game_objects(draw_pads = True, draw_ball = True, \
+            #                    draw_scores = False, draw_line = False)
+            #pygame.display.update()
             
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
