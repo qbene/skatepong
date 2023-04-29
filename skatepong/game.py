@@ -192,7 +192,7 @@ class Game():
         r_score_rect = None
         l_pad_rect = None
         r_pad_rect = None
-        ball_rect_rect = None
+        ball_rect = None
         mid_line_h_rect = None
         mid_line_v_rect = None
         if draw_scores == True:
@@ -865,12 +865,37 @@ class Game():
         start_time = time.time()
         current_time = time.time()
         self.ball.reset()
+        time_before_start = 0
         
+        # Reinitializing display:
+        self.win.fill(self.BLACK)
+        pygame.display.update()
+
+        max_w_txt_countdown = skt_tls.get_max_w_txt(self.FT_NM, \
+                      self.ft_dic["0.20"], "100")
+
+        # Displaying that calibration is about to take place
+        txt_fr_1 = "CALIBRATION A VENIR"
+        txt_en_1 = "CALIBRATION IS ABOUT TO START"
+        txt_fr_2 = "MAINTENIR LES PLANCHES IMMOBILES EN POSITION NEUTRE"
+        txt_en_2 = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"
+        txt_fr_1_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], \
+                          txt_fr_1, self.x_dic["0.50"], self.y_dic["0.20"], self.WHITE)
+        txt_fr_2_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
+                          txt_fr_2, self.x_dic["0.50"], self.y_dic["0.30"], self.WHITE)
+        txt_en_1_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], \
+                          txt_en_1, self.x_dic["0.50"], self.y_dic["0.70"], self.GREY)
+        txt_en_2_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
+                          txt_en_2, self.x_dic["0.50"], self.y_dic["0.80"], self.GREY)
+        pygame.display.update([txt_fr_1_rect, txt_fr_2_rect, \
+                               txt_en_1_rect, txt_en_2_rect])
+
         # Announcing that calibration is about to take place:
         while current_time - start_time < self.DELAY_BEF_PAD_CALIB:
 
             self.clock.tick(self.FPS)
-
+            prev_time_before_start = time_before_start
+            
             # Checking requests for closing / calibrating / restarting:
             keys = pygame.key.get_pressed()
             #check_exit_game(keys)
@@ -882,23 +907,30 @@ class Game():
             time_before_start = self.DELAY_BEF_PAD_CALIB \
                                 - int(current_time - start_time)
            
+            # Updating countdown display if needed :
+            if time_before_start != prev_time_before_start:
+                countdown_rect_erase =  pygame.Rect(0, 0, max_w_txt_countdown, self.ft_dic["0.20"])
+                countdown_rect_erase.center = (self.x_dic["0.50"], self.y_dic["0.50"])
+                countdown_rect_erase = pygame.draw.rect(self.win, self.BLACK, countdown_rect_erase)
+                txt = str(time_before_start)
+                countdown_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.20"], txt, 
+                                  self.x_dic["0.50"], self.y_dic["0.50"], self.WHITE)
+                pygame.display.update([countdown_rect_erase, countdown_rect])
+
+
+            # Erasing from display objects previous positions:  
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
+                color = self.BLACK, pads = True, ball = False, scores = False)
+
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
             
-            # Managing display:
-            self.win.fill(self.BLACK)
-            txt = "CALIBRATION IS ABOUT TO START"
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], \
-                              txt, self.x_dic["0.50"], self.y_dic["0.25"], self.WHITE)
-            txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"                    
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
-                              txt, self.x_dic["0.50"], self.y_dic["0.75"], self.WHITE)
-            txt = str(time_before_start)         
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.20"], \
-                              txt, self.x_dic["0.50"], self.y_dic["0.50"], self.WHITE)
-            self.draw_game_objects(draw_pads = True, draw_ball = False,\
-                                draw_scores = False, draw_line = False)
-            pygame.display.update()
+            # Adding to display objects new positions:
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
+            self.draw_game_objects(draw_pads = True, draw_ball = False, \
+                                   draw_scores = False, draw_line = False)
+            pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
+                        l_pad_rect, r_pad_rect])  
             
             current_time = time.time()
         
@@ -906,22 +938,47 @@ class Game():
         
         # Managing display:
         self.win.fill(self.BLACK)
-        
-        txt = "CALIBRATION ONGOING..."
-        skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], \
-                          txt, self.x_dic["0.50"], self.y_dic["0.25"], self.WHITE)
-        txt = "GET SKATES STEADY IN THEIR NEUTRAL POSITIONS"                  
-        skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
-                          txt, self.x_dic["0.50"], self.y_dic["0.75"], self.WHITE)
-        self.draw_game_objects(draw_pads = True, draw_ball = False, \
-                              draw_scores = False, draw_line = False)
         pygame.display.update()
+        
+        # Displaying that calibration is about to take place
+        txt_fr_3 = "CALIBRATION EN COURS"
+        txt_en_3 = "CALIBRATION ONGOING"
+
+        txt_fr_2_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
+                          txt_fr_2, self.x_dic["0.50"], self.y_dic["0.30"], self.WHITE)
+        txt_en_2_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
+                          txt_en_2, self.x_dic["0.50"], self.y_dic["0.80"], self.GREY)
+        txt_fr_3_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], \
+                          txt_fr_3, self.x_dic["0.50"], self.y_dic["0.20"], self.WHITE)
+        txt_en_3_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], \
+                          txt_en_3, self.x_dic["0.50"], self.y_dic["0.70"], self.GREY)
+        pygame.display.update([txt_fr_2_rect, txt_fr_3_rect, \
+                               txt_en_2_rect, txt_en_3_rect])
+
+        # Adding to display objects new positions:
+        l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
+        self.draw_game_objects(draw_pads = True, draw_ball = False, \
+                               draw_scores = False, draw_line = False)
+        pygame.display.update([l_pad_rect, r_pad_rect])
+                               
         # Gyroscope offset measurement:
         self.l_gyro.offset = self.l_gyro.measure_gyro_offset()
         self.r_gyro.offset = self.r_gyro.measure_gyro_offset()    
+
+        # Erasing from display objects previous positions:  
+        l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
+            color = self.BLACK, pads = True, ball = False, scores = False)  
+
         # Paddles calibration:
         self.l_pad.move_to_center(self.win_h)
         self.r_pad.move_to_center(self.win_h)
+
+        # Adding to display objects new positions:
+        l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
+        self.draw_game_objects(draw_pads = True, draw_ball = False, \
+                               draw_scores = False, draw_line = False)
+        pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
+                    l_pad_rect, r_pad_rect])
 
         # Annoucing that calibration has been performed :
         start_time = time.time()
