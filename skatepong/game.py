@@ -43,7 +43,7 @@ class Game():
     #-------------------------------------------------------------------
     
     # Main game parameters 
-    WINNING_SCORE = 3 # Number of goals to win the game
+    WINNING_SCORE = 30 # Number of goals to win the game
     BALL_ANGLE_MAX = 55 # Max angle after paddle collision (deg) [30-75]
     VELOCITY_ANGLE_FACTOR = 2.5 # Higher ball velocity when angle [2 - 3]
     # Delays
@@ -189,25 +189,61 @@ class Game():
         Draws the desired game elements (pads / ball / scores)
         Note : Each game scene do not require every single game object 
         """
+        l_score_rect = None
+        r_score_rect = None
+        l_pad_rect = None
+        r_pad_rect = None
+        ball_rect_rect = None
+        mid_line_h_rect = None
+        mid_line_v_rect = None
         if draw_scores == True:
-            self.FT_NM = self.FT_NM
-            y = self.ft_dic["0.10"] # 1 font sz offset
-            txt = str(self.l_score)
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt, \
-                  self.x_dic["0.25"], y, self.WHITE)
-            txt = str(self.r_score)
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt, \
-                              self.x_dic["0.75"], y, self.WHITE)
+            txt_l = str(self.l_score)
+            txt_r = str(self.r_score)
+            l_score_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_l, \
+                  self.x_dic["0.25"], self.y_dic["0.10"], self.WHITE)
+            r_score_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_r, \
+                              self.x_dic["0.75"], self.y_dic["0.10"], self.WHITE)
+        if draw_pads == True:
+            l_pad_rect = self.l_pad.draw(self.WHITE)
+            r_pad_rect = self.r_pad.draw(self.WHITE)
+        if draw_ball == True:
+            ball_rect = self.ball.draw(self.WHITE)
         if draw_line == True:        
             thick = int(self.win_w * self.MID_LINE_WIDTH_RATIO)
             horiz_w_factor = self.CENTER_CROSS_MULTIPLIER
-            skt_tls.draw_mid_line(self.win, self.win_w, self.win_h, \
+            mid_line_h_rect, mid_line_v_rect = skt_tls.draw_mid_line(self.win, self.win_w, self.win_h, \
                                   thick, horiz_w_factor, self.WHITE)
-        if draw_pads == True:
-            self.l_pad.draw()
-            self.r_pad.draw()
-        if draw_ball == True:
-            self.ball.draw()
+            
+        return l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, \
+               ball_rect, mid_line_h_rect, mid_line_v_rect
+            
+    def erase_game_objects(self, color, pads = True, ball = True, scores = True):
+        """
+        Erases display of previous positions for changing game elements
+        Note : This includes both pads / ball / scores.
+        """
+        l_score_rect = None
+        r_score_rect = None
+        l_pad_rect = None
+        r_pad_rect = None
+        ball_rect = None
+        if scores == True:
+            txt_l = str(self.l_score)
+            txt_r = str(self.r_score)
+            max_w_txt_score = skt_tls.get_max_w_txt(self.FT_NM, \
+                      self.ft_dic["0.10"], "1000")
+            l_score_rect =  pygame.Rect(0, 0, max_w_txt_score, self.ft_dic["0.10"])
+            r_score_rect =  pygame.Rect(0, 0, max_w_txt_score, self.ft_dic["0.10"])
+            l_score_rect.center = (self.x_dic["0.25"], self.y_dic["0.10"])
+            r_score_rect.center = (self.x_dic["0.75"], self.y_dic["0.10"])
+            l_score_rect = pygame.draw.rect(self.win, color, l_score_rect)
+            r_score_rect = pygame.draw.rect(self.win, color, r_score_rect)
+        if pads == True:
+            l_pad_rect = self.l_pad.draw(color)
+            r_pad_rect = self.r_pad.draw(color)
+        if ball == True:
+            ball_rect = self.ball.draw(color)
+        return l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect
 
     def check_user_inputs(self, keys):
         """
@@ -619,12 +655,19 @@ class Game():
                                   self.x_dic["0.50"], self.y_dic["0.70"], self.GREY)
                 pygame.display.update([txt_fr_max_rect, txt_en_max_rect, txt_fr_rect, txt_en_rect])
 
-            #self.draw_game_objects(draw_pads = True, draw_ball = True, \
-            #                    draw_scores = False, draw_line = False)
-            #pygame.display.update()
-            
+            # Erasing from display objects previous positions:            
+            #
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = \
+                    self.erase_game_objects(color = self.BLACK, pads = True, ball = False, scores = True)
+            # Moving objects:
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
+            # Adding to display objects new positions:
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
+                self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
+            # Updating the necessary parts of the display:
+            pygame.display.update([l_pad_rect_old, r_pad_rect_old, l_pad_rect, r_pad_rect])    
+
             if abs(vy_l_pad) > 25:
                 left_player_ready = True
                 moving_time = time.time()
@@ -648,9 +691,15 @@ class Game():
         """
         start_time = time.time()
         current_time = time.time()
+        time_before_start = 0
         
+        # Reinitializing display:
+        self.win.fill(self.BLACK)
+        pygame.display.update()
+        max_w_txt_countdown = skt_tls.get_max_w_txt(self.FT_NM, \
+                      self.ft_dic["0.20"], "100")
         while current_time - start_time < self.DELAY_COUNTDOWN:
-            
+            prev_time_before_start = time_before_start
             self.clock.tick(self.FPS)
             
             # Checking requests for closing / calibrating / restarting:
@@ -661,22 +710,31 @@ class Game():
             self.reinitialize_gyro_if_needed()
 
             time_before_start = self.DELAY_COUNTDOWN \
-                                - int(current_time - start_time) 
+                                - int(current_time - start_time)
+            
+            # Updating countdown display if needed :
+            if time_before_start != prev_time_before_start:
+                countdown_rect_erase =  pygame.Rect(0, 0, max_w_txt_countdown, self.ft_dic["0.20"])
+                countdown_rect_erase.center = (self.x_dic["0.50"], self.y_dic["0.25"])
+                countdown_rect_erase = pygame.draw.rect(self.win, self.BLACK, countdown_rect_erase)
+                txt = str(time_before_start)
+                countdown_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.20"], txt, 
+                                  self.x_dic["0.50"], self.y_dic["0.25"], self.WHITE)
+                pygame.display.update([countdown_rect_erase, countdown_rect])
 
+            # Erasing from display objects previous positions:  
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
+                color = self.BLACK, pads = True, ball = False, scores = False)
+            # Moving objects:
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
-
-            # Managing display:
-            self.win.fill(self.BLACK)
-            txt = str(time_before_start)
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.20"], txt, 
-                              self.x_dic["0.50"], self.y_dic["0.25"], self.WHITE)
-            self.draw_game_objects(draw_pads = True, draw_ball = True, \
-                                draw_scores = False, draw_line = False)
-            pygame.display.update()
-            
+            # Adding to display objects new positions:
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
+                self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
+            # Updating the necessary parts of the display:
+            pygame.display.update([l_pad_rect_old, r_pad_rect_old, l_pad_rect, r_pad_rect])    
             current_time = time.time()
-       
+        
         self.game_status = self.SCENE_GAME_ONGOING
 
     def game_ongoing(self):

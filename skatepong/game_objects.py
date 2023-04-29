@@ -26,11 +26,13 @@ class Ball():
         self.vy = self.original_vy = vy # Ball vertical - y axis (px)
         self.rect = pygame.Rect(x - r, y - r, 2 * r, 2 * r)
 
-    def draw(self):
+    def draw(self, color):
         """
         Draws the ball as a circle.
         """
-        pygame.draw.circle(self.win,self.color,self.rect.center,self.r)
+        ball_rect = pygame.draw.circle(self.win, color, \
+                                       self.rect.center, self.r)
+        return ball_rect
         
     def move(self):
         """
@@ -66,11 +68,12 @@ class Paddle():
         self.gyro = gyro # Gyroscope controlling paddle displacement
         self.rect = pygame.Rect(x, y, w, h) # Rect for positionning
 
-    def draw(self):
+    def draw(self, color):
         """
         Draws the paddle as a rectangle.
         """        
-        pygame.draw.rect(self.win, self.color, self.rect)
+        pad_rect = pygame.draw.rect(self.win, color, self.rect)
+        return pad_rect
 
     def compute_pad_velocity(self):
         """

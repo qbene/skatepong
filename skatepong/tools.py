@@ -45,10 +45,8 @@ def get_max_w_txt(font_nm, font_sz, *txts):
     for txt in txts:
         txt_surf = font.render(txt, True, color)
         txt_w = txt_surf.get_width()
-        #print (txt_w)
         if txt_w > max_w_txt:
             max_w_txt = txt_w
-    #print ("Max text width :", max_w_txt)
     return max_w_txt
     
     
@@ -61,8 +59,9 @@ def draw_mid_line(win, win_w, win_h, thick, horiz_w_factor, color):
     horiz_rect = pygame.Rect(0, 0, horiz_w_factor * thick, thick)
     vert_rect.center = (win_w // 2, win_h //2)
     horiz_rect.center = (win_w // 2, win_h //2)
-    pygame.draw.rect(win, color, horiz_rect)
-    pygame.draw.rect(win, color, vert_rect)
+    mid_line_h_rect = pygame.draw.rect(win, color, horiz_rect)
+    mid_line_v_rect = pygame.draw.rect(win, color, vert_rect)
+    return mid_line_h_rect, mid_line_v_rect
 
 def comp_font_sizes(win_h):
     """
@@ -128,8 +127,8 @@ def main():
     """
     Function for test purposes only
     """
-    pygame.init()
-    get_max_w_txt("comicsans", 10, "Hello", "Move Skate", "Left")
+    pass
+
 
 if __name__ == '__main__':
     main()
