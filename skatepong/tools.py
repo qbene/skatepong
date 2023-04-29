@@ -81,24 +81,48 @@ def comp_common_coordinates(win_w, win_h):
     Creates a dictionnary with commonly used window coordinates.
     """
     x_dic = {
-             "1/4": win_w // 4, \
-             "1/2": win_w // 2, \
-             "3/4": (win_w * 3) // 4 \
+             "0.05": int(win_w * 0.05), \
+             "0.10": int(win_w * 0.10), \
+             "0.15": int(win_w * 0.15), \
+             "0.20": int(win_w * 0.20), \
+             "0.25": int(win_w * 0.25), \
+             "0.30": int(win_w * 0.30), \
+             "0.35": int(win_w * 0.35), \
+             "0.40": int(win_w * 0.40), \
+             "0.45": int(win_w * 0.45), \
+             "0.50": int(win_w * 0.50), \
+             "0.55": int(win_w * 0.55), \
+             "0.60": int(win_w * 0.60), \
+             "0.65": int(win_w * 0.65), \
+             "0.70": int(win_w * 0.70), \
+             "0.75": int(win_w * 0.75), \
+             "0.80": int(win_w * 0.80), \
+             "0.85": int(win_w * 0.85), \
+             "0.90": int(win_w * 0.90), \
+             "0.95": int(win_w * 0.95) \
              }
     y_dic = {
-             "1/4": win_h // 4, \
-             "1/2": win_h // 2, \
-             "3/4": (win_h * 3) // 4 \
+             "0.05": int(win_h * 0.05), \
+             "0.10": int(win_h * 0.10), \
+             "0.15": int(win_h * 0.15), \
+             "0.20": int(win_h * 0.20), \
+             "0.25": int(win_h * 0.25), \
+             "0.30": int(win_h * 0.30), \
+             "0.35": int(win_h * 0.35), \
+             "0.40": int(win_h * 0.40), \
+             "0.45": int(win_h * 0.45), \
+             "0.50": int(win_h * 0.50), \
+             "0.55": int(win_h * 0.55), \
+             "0.60": int(win_h * 0.60), \
+             "0.65": int(win_h * 0.65), \
+             "0.70": int(win_h * 0.70), \
+             "0.75": int(win_h * 0.75), \
+             "0.80": int(win_h * 0.80), \
+             "0.85": int(win_h * 0.85), \
+             "0.90": int(win_h * 0.90), \
+             "0.95": int(win_h * 0.95) \
              }
     return x_dic, y_dic
-    """         
-    self.x_1_2 = self.win_w // 2
-    self.x_1_4 = self.win_w // 4
-    self.x_3_4 = (self.win_w * 3) // 4
-    self.y_1_2 = self.win_h // 2
-    self.y_1_4 = self.win_h // 4
-    self.y_3_4 = (self.win_h * 3) // 4
-    """
 
 def main():
     """
