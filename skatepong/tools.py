@@ -21,18 +21,6 @@ def draw_text(win, font_nm, font_sz, txt, x, y, color, bg_color = None):
     txt_rect = txt_surf.get_rect()
     txt_rect.center = (x, y)
     win.blit(txt_surf, txt_rect)
-    
-def draw_text_2(win, font_nm, font_sz, txt, x, y, color, bg_color = None):
-    """
-    Draws text on a surface, text center serving as position reference.
-    
-    bg_color = text background color
-    """
-    font = pygame.font.SysFont(font_nm, font_sz)
-    txt_surf = font.render(txt, True, color, bg_color)
-    txt_rect = txt_surf.get_rect()
-    txt_rect.center = (x, y)
-    win.blit(txt_surf, txt_rect)
     return txt_rect
     
 def get_max_w_txt(font_nm, font_sz, *txts):

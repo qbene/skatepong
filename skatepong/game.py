@@ -76,7 +76,6 @@ class Game():
     CENTER_CROSS_MULTIPLIER = 3 # Mid line thikness factor [2 - 5]
     # Text fonts parameters (names and sizes)
     FT_NM = "comicsans" # or 'quicksandmedium'. Font used for texts.
-    FT_NM_EN = 'quicksandmedium'
 
     #-------------------------------------------------------------------
     # CONSTANTS
@@ -562,9 +561,9 @@ class Game():
                 txt_en_max_rect.center = (self.x_dic["0.50"], self.y_dic["0.60"])
                 txt_fr_max_rect = pygame.draw.rect(self.win, self.BLACK, txt_fr_max_rect)
                 txt_en_max_rect = pygame.draw.rect(self.win, self.BLACK, txt_en_max_rect)
-                txt_fr_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_fr, \
+                txt_fr_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_fr, \
                                   self.x_dic["0.50"], self.y_dic["0.40"], self.WHITE)
-                txt_en_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_en, \
+                txt_en_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_en, \
                                   self.x_dic["0.50"], self.y_dic["0.60"], self.GREY)
                 pygame.display.update([txt_fr_max_rect, txt_en_max_rect, txt_fr_rect, txt_en_rect])
         
@@ -602,9 +601,9 @@ class Game():
         self.win.fill(self.BLACK)
         pygame.display.update()
         # The message below is always displayed until players are ready:
-        txt_fr_0_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.05"], txt_fr_0, \
+        txt_fr_0_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], txt_fr_0, \
                           self.x_dic["0.50"], self.y_dic["0.30"], self.WHITE)
-        txt_en_0_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.05"], txt_en_0, \
+        txt_en_0_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], txt_en_0, \
                           self.x_dic["0.50"], self.y_dic["0.80"], self.GREY)
         pygame.display.update([txt_fr_0_rect, txt_en_0_rect])
         
@@ -649,16 +648,16 @@ class Game():
                 txt_en_max_rect.center = (self.x_dic["0.50"], self.y_dic["0.70"])
                 txt_fr_max_rect = pygame.draw.rect(self.win, self.BLACK, txt_fr_max_rect)
                 txt_en_max_rect = pygame.draw.rect(self.win, self.BLACK, txt_en_max_rect)
-                txt_fr_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_fr, \
+                txt_fr_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_fr, \
                                   self.x_dic["0.50"], self.y_dic["0.20"], self.WHITE)
-                txt_en_rect = skt_tls.draw_text_2(self.win, self.FT_NM, self.ft_dic["0.10"], txt_en, \
+                txt_en_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_en, \
                                   self.x_dic["0.50"], self.y_dic["0.70"], self.GREY)
                 pygame.display.update([txt_fr_max_rect, txt_en_max_rect, txt_fr_rect, txt_en_rect])
 
             # Erasing from display objects previous positions:            
             #
             l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = \
-                    self.erase_game_objects(color = self.BLACK, pads = True, ball = False, scores = True)
+                    self.erase_game_objects(color = self.BLACK, pads = True, ball = True, scores = True)
             # Moving objects:
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
@@ -666,7 +665,7 @@ class Game():
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
                 self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
             # Updating the necessary parts of the display:
-            pygame.display.update([l_pad_rect_old, r_pad_rect_old, l_pad_rect, r_pad_rect])    
+            pygame.display.update([l_pad_rect_old, r_pad_rect_old, ball_rect_old, l_pad_rect, r_pad_rect, ball_rect])    
 
             if abs(vy_l_pad) > 25:
                 left_player_ready = True
@@ -724,7 +723,7 @@ class Game():
 
             # Erasing from display objects previous positions:  
             l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
-                color = self.BLACK, pads = True, ball = False, scores = False)
+                color = self.BLACK, pads = True, ball = True, scores = False)
             # Moving objects:
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
@@ -732,7 +731,7 @@ class Game():
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
                 self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
             # Updating the necessary parts of the display:
-            pygame.display.update([l_pad_rect_old, r_pad_rect_old, l_pad_rect, r_pad_rect])    
+            pygame.display.update([l_pad_rect_old, r_pad_rect_old, ball_rect_old, l_pad_rect, r_pad_rect, ball_rect])    
             current_time = time.time()
         
         self.game_status = self.SCENE_GAME_ONGOING
@@ -805,11 +804,24 @@ class Game():
         start_time = time.time()
         current_time = time.time()
         self.ball.reset()
-        
+
+        # Reinitializing display:
+        self.win.fill(self.BLACK)
+        pygame.display.update()
+
         if (self.l_score == self.WINNING_SCORE):
-            msg = "LEFT PLAYER WON"
+            txt_fr = "VICTOIRE DU JOUEUR GAUCHE"
+            txt_en = "LEFT PLAYER WON"
         else:
-            msg = "RIGHT PLAYER WON"
+            txt_fr = "VICTOIRE DU JOUEUR DROIT"
+            txt_en = "RIGHT PLAYER WON"
+
+        # Displaying winner:
+        txt_fr_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_fr, \
+                              self.x_dic["0.50"], self.y_dic["0.30"], self.WHITE)
+        txt_en_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_en, \
+                              self.x_dic["0.50"], self.y_dic["0.70"], self.GREY)
+        pygame.display.update([txt_fr_rect, txt_en_rect])
         
         while current_time - start_time < self.DELAY_GAME_END:
             
@@ -823,17 +835,21 @@ class Game():
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
 
+            # Erasing from display objects previous positions:  
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
+                color = self.BLACK, pads = True, ball = True, scores = True)
+
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
 
-            # Managing display:
-            self.win.fill(self.BLACK)
-            self.draw_game_objects(draw_pads = True, draw_ball = False,\
-                                  draw_scores = True, draw_line = False)
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.15"], msg, \
-                              self.x_dic["0.50"], self.y_dic["0.50"], self.WHITE)
-            pygame.display.update()
-
+            # Adding to display objects new positions:
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
+            self.draw_game_objects(draw_pads = True, draw_ball = True, \
+                                   draw_scores = True, draw_line = False)
+            pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
+                        ball_rect_old, l_score_rect_old, \
+                        r_score_rect_old, l_pad_rect, r_pad_rect, \
+                        ball_rect, l_score_rect, r_score_rect])   
             current_time = time.time()
         
         self.game_status = self.SCENE_WAITING_PLAYERS   
