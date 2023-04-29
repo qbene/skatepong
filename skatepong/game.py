@@ -746,6 +746,10 @@ class Game():
         self.r_score = 0
         goal_to_be = False
         random_number = random.randint(1, 2)
+
+        # Reinitializing display:
+        self.win.fill(self.BLACK)
+        pygame.display.update()
         
         # Determining ball direction at start.
         if random_number == 1:
@@ -769,18 +773,23 @@ class Game():
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
 
+            # Erasing from display objects previous positions:  
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
+                color = self.BLACK, pads = True, ball = True, scores = True)
+            # Moving objects:
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
-
             self.ball.move()
             goal_to_be = self.handle_collision(goal_to_be)
             goal_to_be = self.detect_goal(goal_to_be)        
-
-            # Managing display:
-            self.win.fill(self.BLACK)
+            # Adding to display objects new positions:
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
             self.draw_game_objects(draw_pads = True, draw_ball = True, \
                                    draw_scores = True, draw_line = True)
-            pygame.display.update()   
+            pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
+                        ball_rect_old, l_score_rect_old, \
+                        r_score_rect_old, l_pad_rect, r_pad_rect, \
+                        ball_rect, l_score_rect, r_score_rect])   
 
             if self.l_score >= self.WINNING_SCORE \
             or self.r_score >= self.WINNING_SCORE:
