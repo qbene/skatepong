@@ -43,7 +43,7 @@ class Game():
     #-------------------------------------------------------------------
     
     # Main game parameters 
-    WINNING_SCORE = 30 # Number of goals to win the game
+    WINNING_SCORE = 5 # Number of goals to win the game
     BALL_ANGLE_MAX = 55 # Max angle after paddle collision (deg) [30-75]
     VELOCITY_ANGLE_FACTOR = 2.5 # Higher ball velocity when angle [2 - 3]
     # Delays
@@ -789,7 +789,8 @@ class Game():
             pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
                         ball_rect_old, l_score_rect_old, \
                         r_score_rect_old, l_pad_rect, r_pad_rect, \
-                        ball_rect, l_score_rect, r_score_rect])   
+                        ball_rect, l_score_rect, r_score_rect, \
+                        mid_line_h_rect, mid_line_v_rect])   
 
             if self.l_score >= self.WINNING_SCORE \
             or self.r_score >= self.WINNING_SCORE:
