@@ -55,7 +55,7 @@ class Game():
     DELAY_AFT_PAD_CALIB = 5 # Delay for testing paddles calib. (s)
     # Technical parameters
     FPS = 60 # Max number of frames per second
-    GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_500DEG
+    GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_1000DEG
     """
     For GYRO_SENSITIVITY, use one of the following constants:
     mpu6050.GYRO_RANGE_250DEG = 0x00 # +/- 125 deg/s
@@ -120,7 +120,8 @@ class Game():
         # Resolution limitation to avoid lags with resolution 1920x1080
         print ("Display resolution :", disp_w, disp_h) 
         if disp_w == 1920 and disp_h == 1080:
-            print ("Resolution reduction needed")
+            print ("Game resolution reduced vs display resolution \
+                    for better performances on Raspberry Pi 3 Model B+")
             disp_w = 1280
             disp_h = 720
         if self.full_screen == False:

@@ -20,6 +20,11 @@ class Gyro_one_axis(mpu6050):
     I2C_ADDRESS_2 = 0x69 # A0 connected to VCC
     
     def __init__(self, address, axis, sensitivity, bus = 1):
+        # Calling '__init__' of mother class:
+        mpu6050.__init__(self, address, bus = 1)
+        mpu6050.set_gyro_range(self, sensitivity)
+        self.numerical_sensitivity = mpu6050.read_gyro_range(self)
+        # Personal class init:
         self.axis = axis # 'x' / 'y' / 'z'
         self.sensitivity = sensitivity # Used for gyroscope init
         """
@@ -29,33 +34,16 @@ class Gyro_one_axis(mpu6050):
         mpu6050.GYRO_RANGE_1000DEG = 0x10 # +/- 500 deg/s
         mpu6050.GYRO_RANGE_2000DEG = 0x18 # +/- 1000 deg/s
         """
-        self.get_numerical_sensitivity() # Used for paddles velocity
         self.offset = 0
         self.error = False
         self.ready_for_reinit = False
-        
-        # Calling '__init__' of mother class :
-        mpu6050.__init__(self, address, bus = 1)
-    
+
     def get_data(self):
         """
         Returns angular rotation (in deg/s) along the chosen axis.
         """
         gyro_data = self.get_gyro_data()[self.axis]
         return gyro_data
-    
-    def get_numerical_sensitivity(self):
-        """
-        Adds gyroscope sensitivity in deg/seconds (+/-) to the object.
-        """
-        if self.sensitivity == 0x00:
-            self.numerical_sensitivity = 250
-        elif self.sensitivity == 0x08:
-            self.numerical_sensitivity = 500
-        elif self.sensitivity == 0x10:
-            self.numerical_sensitivity = 1000
-        elif self.sensitivity == 0x18:
-            self.numerical_sensitivity = 2000
 
     def measure_gyro_offset(self, nb_calib_pts = 500):
         """
@@ -77,9 +65,9 @@ class Gyro_one_axis(mpu6050):
     
 def main():
     gyro_1 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', \
-             mpu6050.GYRO_RANGE_500DEG)
+             mpu6050.GYRO_RANGE_1000DEG)
     gyro_2 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', \
-             mpu6050.GYRO_RANGE_500DEG)
+             mpu6050.GYRO_RANGE_1000DEG)
 
     print("Gyroscope 1 :")
     print("Sensitivity:", str(gyro_1.numerical_sensitivity), "deg/s")
