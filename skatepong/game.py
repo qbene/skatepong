@@ -120,8 +120,8 @@ class Game():
         # Resolution limitation to avoid lags with resolution 1920x1080
         print ("Display resolution :", disp_w, disp_h) 
         if disp_w == 1920 and disp_h == 1080:
-            print ("Game resolution reduced vs display resolution \
-                    for better performances on Raspberry Pi 3 Model B+")
+            print ("Game resolution reduced vs display resolution", \
+            "for better performances on Raspberry Pi 3 Model B+")
             disp_w = 1280
             disp_h = 720
         if self.full_screen == False:
@@ -168,20 +168,28 @@ class Game():
         """
         Recreates gyroscopes objects following deconnections.
         """
-        if (self.l_gyro.error and self.l_gyro.ready_for_reinit):
+        if self.l_gyro.error:
+            print("Issue : i2c communication with left gyroscope lost")
             try:
                 self.l_gyro = skt_gyro.Gyro_one_axis( \
                             skt_gyro.Gyro_one_axis.I2C_ADDRESS_1,\
                             'y', self.GYRO_SENSITIVITY)
             except IOError:
                 pass
-        if (self.r_gyro.error and self.r_gyro.ready_for_reinit):
+            else:
+                print("Left gyroscope reconnected")
+                self.l_pad.gyro = self.l_gyro
+        if self.r_gyro.error:
+            print("Issue : i2c communication with right gyroscope lost")
             try:
                 self.r_gyro = skt_gyro.Gyro_one_axis( \
                             skt_gyro.Gyro_one_axis.I2C_ADDRESS_2,\
                             'y', self.GYRO_SENSITIVITY)
             except IOError:
                 pass
+            else:
+                print("Right gyroscope reconnected")
+                self.r_pad.gyro = self.r_gyro
 
     def draw_game_objects(self, draw_pads = False, draw_ball = False, \
                           draw_scores = False, draw_line = False):
@@ -522,7 +530,7 @@ class Game():
 
             # Left gyro test :
             try:
-                l_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_1, \
+                self.l_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_1, \
                         'y', self.GYRO_SENSITIVITY)
             except IOError:
                 l_gyro_connected = False
@@ -530,7 +538,7 @@ class Game():
                 l_gyro_connected = True
             # Right gyro test :
             try:
-                r_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_2, \
+                self.r_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_2, \
                          'y', self.GYRO_SENSITIVITY)
             except IOError:
                 r_gyro_connected = False
@@ -571,8 +579,8 @@ class Game():
                 else:
                     pygame.display.update([txt_fr_max_rect, txt_en_max_rect, txt_fr_rect, txt_en_rect])
         
-        self.l_gyro = l_gyro
-        self.r_gyro = r_gyro
+        #self.l_gyro = l_gyro
+        #self.r_gyro = r_gyro
         self.game_status = self.SCENE_WAITING_PLAYERS
 
     def wait_players(self):

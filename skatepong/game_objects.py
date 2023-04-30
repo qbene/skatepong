@@ -85,43 +85,15 @@ class Paddle():
         try:
             gyro_raw = self.gyro.get_data()
         except IOError:
-            print("i2c communication with gyroscope interrupted")
             self.gyro.error = True
-            self.gyro.ready_for_reinit = False
             vy = 0
         # Computing pad velocity if gyroscope is connected
         else:
-            self.gyro.ready_for_reinit = True
             gyro_calib = gyro_raw - self.gyro.offset
             # vy => Negative signe added to have correct pad \
             # displacement based on physical installation on skateboards
             vy = - int(gyro_calib / self.gyro.numerical_sensitivity * \
                      self.win_h * vy_factor)
-            
-            """
-            if gyro_calib < -200:
-                vy_factor = -20
-            elif  (gyro_calib >= -200 and gyro_calib < -100):
-                vy_factor = -2
-            elif (gyro_calib >= -50 and gyro_calib < -10): 
-                vy_factor = -1  
-            elif (gyro_calib >= -10 and gyro_calib < 10):
-                vy_factor = 0
-            elif (gyro_calib >= 10 and gyro_calib < 50):
-                vy_factor = 1
-            elif (gyro_calib >= 50 and gyro_calib < 200):
-                vy_factor = 2
-            elif gyro_calib >= 200:
-                vy_factor = 3
-            else:
-                vy = 0
-            vy = int(vy_factor * self.VY_PAD_RATIO * self.win_h)
-            """
-            '''
-            print("Gyro (" + self.gyro.axis + " axis) => Raw data :", \
-                  str(round(gyro_raw,2)), "/ Calibrated data :", \
-                  str(round(gyro_calib,2)))
-            '''
         return vy
 
     def move(self, win_h):
