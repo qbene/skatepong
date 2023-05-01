@@ -1,0 +1,7 @@
+# QJoyPad 4.3 Layout File
+
+Joystick 1 {
+	Button 2: key 39
+	Button 9: key 54
+}
+

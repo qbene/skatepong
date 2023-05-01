@@ -12,7 +12,7 @@ METHOD 1 (preferred) : Using poetry
 
 1 - Activate the i2c communication in your Rspberry Pi and reboot.
 
-2 - Clone the Skatepong git repository.
+2 - Clone the Skatepong git repository and open a terminal from this folder:
 
 3 - Create a Python virutal environment.
 
@@ -30,6 +30,13 @@ sudo apt install python3-smbus i2c-tools
 sudo apt install libsdl2-mixer-2.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0
 sudo apt install libsdl2-dev
 sudo apt install qjoypad
+
+8 - Copy the file "controller_config/ness_controller_skatepong.lyt" 
+in the folder "/home/<user_name>/.qjoypad3". 
+Note : DO NOT RENAME THE FILE
+
+9 - To start the game, from the git folder :
+./run_skatepong.sh
 
 ------------------------------------------------------------------------
 METHOD 2 : Using PIP
@@ -55,6 +62,13 @@ sudo apt install python3-smbus i2c-tools
 sudo apt install libsdl2-mixer-2.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0
 sudo apt install libsdl2-dev
 sudo apt install qjoypad
+
+7 - Copy the file "controller_config/ness_controller_skatepong.lyt" 
+in the folder "/home/<user_name>/.qjoypad3". 
+Note : DO NOT RENAME THE FILE
+
+8 - To start the game, from the git folder :
+./run_skatepong.sh
 
 ------------------------------------------------------------------------
 IN CASE OF ISSUES
