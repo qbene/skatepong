@@ -29,7 +29,8 @@ poetry install
 sudo apt install python3-smbus i2c-tools
 sudo apt install libsdl2-mixer-2.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0
 sudo apt install libsdl2-dev
-sudo apt install qjoypad
+sudo apt install qjoypad # For game controller
+sudo apt install unclutter # To hide mouse cursor
 
 8 - Copy the file "controller_config/ness_controller_skatepong.lyt" 
 in the folder "/home/<user_name>/.qjoypad3". 
@@ -61,7 +62,8 @@ pip3 install pygame
 sudo apt install python3-smbus i2c-tools
 sudo apt install libsdl2-mixer-2.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0
 sudo apt install libsdl2-dev
-sudo apt install qjoypad
+sudo apt install qjoypad # For game controller
+sudo apt install unclutter # To hide mouse cursor
 
 7 - Copy the file "controller_config/ness_controller_skatepong.lyt" 
 in the folder "/home/<user_name>/.qjoypad3". 
