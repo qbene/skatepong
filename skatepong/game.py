@@ -508,7 +508,7 @@ class Game():
         txt_fr_2 = "VEUILLEZ CONNECTER LA PLANCHE DROITE"
         txt_en_2 = "PLEASE CONNECT RIGHT SKATEBOARD"
         txt_fr_3 = "VEUILLEZ CONNECTER LES PLANCHES"
-        txt_en_3 = "PLEASE CONNECT SKATEBOARDs"
+        txt_en_3 = "PLEASE CONNECT SKATEBOARDS"
         max_w_txt_fr = skt_tls.get_max_w_txt(self.FT_NM, \
                       self.ft_dic["0.10"], txt_fr_1, txt_fr_2, txt_fr_3)
         max_w_txt_en = skt_tls.get_max_w_txt(self.FT_NM, \
