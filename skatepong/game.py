@@ -508,7 +508,7 @@ class Game():
         txt_fr_2 = "VEUILLEZ CONNECTER LA PLANCHE DROITE"
         txt_en_2 = "PLEASE CONNECT RIGHT SKATEBOARD"
         txt_fr_3 = "VEUILLEZ CONNECTER LES PLANCHES"
-        txt_en_3 = "PLEASE CONNECT SKATEBOARDs"
+        txt_en_3 = "PLEASE CONNECT SKATEBOARDS"
         max_w_txt_fr = skt_tls.get_max_w_txt(self.FT_NM, \
                       self.ft_dic["0.10"], txt_fr_1, txt_fr_2, txt_fr_3)
         max_w_txt_en = skt_tls.get_max_w_txt(self.FT_NM, \
@@ -672,8 +672,8 @@ class Game():
             l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = \
                     self.erase_game_objects(color = self.BLACK, pads = True, ball = True, scores = True)
             # Moving objects:
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            self.l_pad.move()
+            self.r_pad.move()
             # Adding to display objects new positions:
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
                 self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
@@ -684,10 +684,10 @@ class Game():
             else:  
                 pygame.display.update([l_pad_rect_old, r_pad_rect_old, ball_rect_old, l_pad_rect, r_pad_rect, ball_rect])    
 
-            if abs(vy_l_pad) > 25:
+            if abs(self.l_gyro.pos) > 25:
                 left_player_ready = True
                 moving_time = time.time()
-            if abs(vy_r_pad) > 25:
+            if abs(self.r_gyro.pos) > 25:
                 right_player_ready = True
                 moving_time = time.time()
 
@@ -745,8 +745,8 @@ class Game():
             l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
                 color = self.BLACK, pads = True, ball = True, scores = False)
             # Moving objects:
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            self.l_pad.move()
+            self.r_pad.move()
             # Adding to display objects new positions:
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
                 self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
@@ -800,8 +800,8 @@ class Game():
             l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
                 color = self.BLACK, pads = True, ball = True, scores = True)
             # Moving objects:
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            self.l_pad.move()
+            self.r_pad.move()
             self.ball.move()
             goal_to_be = self.handle_collision(goal_to_be)
             goal_to_be = self.detect_goal(goal_to_be)        
@@ -865,8 +865,8 @@ class Game():
             l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
                 color = self.BLACK, pads = True, ball = True, scores = True)
 
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            self.l_pad.move()
+            self.r_pad.move()
 
             # Adding to display objects new positions:
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
@@ -952,8 +952,8 @@ class Game():
             l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
                 color = self.BLACK, pads = True, ball = False, scores = False)
 
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            self.l_pad.move()
+            self.r_pad.move()
             
             # Adding to display objects new positions:
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
@@ -1003,8 +1003,8 @@ class Game():
             color = self.BLACK, pads = True, ball = False, scores = False)  
 
         # Paddles calibration:
-        self.l_pad.move_to_center(self.win_h)
-        self.r_pad.move_to_center(self.win_h)
+        self.l_pad.move_to_center()
+        self.r_pad.move_to_center()
 
         # Adding to display objects new positions:
         l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
@@ -1069,8 +1069,8 @@ class Game():
             l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
                 color = self.BLACK, pads = True, ball = False, scores = False)  
 
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            self.l_pad.move()
+            self.r_pad.move()
             
             # Adding to display objects new positions:
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \

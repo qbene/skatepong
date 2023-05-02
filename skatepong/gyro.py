@@ -27,6 +27,7 @@ class Gyro_one_axis(mpu6050):
         # Personal class init:
         self.axis = axis # 'x' / 'y' / 'z'
         self.sensitivity = sensitivity # Used for gyroscope init
+        self.prev_time = time.time()
         """
         For sensitivity, use one of the following constants:
         mpu6050.GYRO_RANGE_250DEG = 0x00 # +/- 125 deg/s
@@ -63,31 +64,20 @@ class Gyro_one_axis(mpu6050):
               " axis) :", str(round(gyro_offset, 2)))
         self.offset = gyro_offset
         return gyro_offset
-    
-    def get_position_OLD(self, position, angular_v, previous_time):
+
+    def get_position(self):
         """
-        Returns the position of the gyroscope on the given axis
-        """
-        current_time = time.time()
-        if angular_v < -1 or angular_v > 1:
-            position = position + (angular_v * (current_time - previous_time))
-        else:
-            position = position
-        previous_time = current_time
-        self.position = position
-        return position, previous_time
-        
-    def get_position(self, prev_time):
-        """
-        Returns the position of the gyroscope on the given axis
+        Returns the position (deg) of the gyroscope on the given axis.
+        0 deg = skateboard in the middle position
+        >0 deg = skateboard to the right
+        <0 deg = skateboard to the left
         """
         cur_time = time.time()
         gyro_raw = self.get_data()
         gyro_calib = gyro_raw - self.offset
-        if gyro_calib < -1 or gyro_calib > 1: # Filter
-            self.pos += gyro_calib * (cur_time - prev_time)
-        prev_time = cur_time
-        return prev_time
+        if gyro_calib < -0.3 or gyro_calib > 0.3: # Filter
+            self.pos += gyro_calib * (cur_time - self.prev_time)
+        self.prev_time = cur_time
         
     
 def main():
@@ -102,17 +92,17 @@ def main():
     print("Gyroscope 2 :")
     print("Sensitivity:", str(gyro_2.numerical_sensitivity), "deg/s")
     gyro_2_offset = gyro_2.measure_gyro_offset()
-    prev_time = time.time()
     
     while True:
         gyro_1_raw = gyro_1.get_data()
-        #gyro_2_raw = gyro_2.get_data()
+        gyro_2_raw = gyro_2.get_data()
         gyro_1_calibrated = gyro_1_raw - gyro_1_offset
-        #gyro_2_calibrated = gyro_2_raw - gyro_2_offset
+        gyro_2_calibrated = gyro_2_raw - gyro_2_offset
         print("Gyro 1 (" + gyro_1.axis + " axis) => Raw data :", \
               str(round(gyro_1_raw,2)), "/ Calibrated data :", \
               str(round(gyro_1_calibrated,2)))
-        prev_time = gyro_1.get_position(prev_time)
+        gyro_1.get_position()
+        #gyro_2.get_position()
         print ("Gyro 1 position =", str(round(gyro_1.pos,3)), "deg/s")
         #print("Gyro 2 (" + gyro_2.axis + " axis) => Raw data :", \
         #      str(round(gyro_2_raw,2)), "/ Calibrated data :", \
