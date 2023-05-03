@@ -110,6 +110,29 @@ def comp_common_coordinates(win_w, win_h):
              "0.95": int(win_h * 0.95) \
              }
     return x_dic, y_dic
+    
+def get_cpu():
+	"""
+	Returns cpu revision information
+	-------------------------------------------------------------------
+	3 Model B -> a02082 / a22082 / a32082
+	3 Model B+ -> a020d3
+	4 Model B (1Go) -> a03111 
+	4 Model B (2Go) -> b03111 / b03112 / b03114 / b03115
+	4 Model B (4Go) -> c03111 / c03112 / c03114 / c03115
+	4 Model B (8Go) -> d03114 / d03115
+	-------------------------------------------------------------------
+	"""
+	try:
+		f = open('/proc/cpuinfo','r')
+		for line in f:
+			if line [0:8] == "Revision":
+				cpu_rev = line[11:17]
+		f.close()
+	except:
+		cpu_rev = "not found"
+	print ("cpu revision:", cpu_rev)
+	return (cpu_rev)
 
 def main():
     """
