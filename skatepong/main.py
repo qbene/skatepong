@@ -5,6 +5,7 @@
 #-----------------------------------------------------------------------
 
 import skatepong.game
+import skatepong.constants as skt_cst
 
 #-----------------------------------------------------------------------
 # CODE
@@ -29,32 +30,22 @@ def main():
         CALIBRATION : Allows paddles calibratation upon request.
     """
 
-    # Game scenes (used for game navigation):
-    SCENE_WELCOME = 0
-    SCENE_WAITING_GYROS = 1
-    SCENE_WAITING_PLAYERS = 2
-    SCENE_COUNTDOWN = 3
-    SCENE_GAME_ONGOING = 4
-    SCENE_GAME_END = 5
-    SCENE_CALIBRATION = 6
-
-    game = skatepong.game.Game(full_screen = False)
+    game = skatepong.game.Game(full_screen = True)
     while True:
-        
-        if game.game_status == SCENE_WELCOME:
+        if game.game_status == skt_cst.SCENE_WELCOME:
             game.welcome()
-        elif game.game_status == SCENE_WAITING_GYROS:
+        elif game.game_status == skt_cst.SCENE_WAITING_GYROS:
             game.wait_gyros()
             game.create_game_elements()
-        elif game.game_status == SCENE_WAITING_PLAYERS:
+        elif game.game_status == skt_cst.SCENE_WAITING_PLAYERS:
             game.wait_players()
-        elif game.game_status == SCENE_COUNTDOWN:
+        elif game.game_status == skt_cst.SCENE_COUNTDOWN:
             game.countdown()
-        elif game.game_status == SCENE_GAME_ONGOING:
+        elif game.game_status == skt_cst.SCENE_GAME_ONGOING:
             game.game_ongoing()
-        elif game.game_status == SCENE_GAME_END:
+        elif game.game_status == skt_cst.SCENE_GAME_END:
             game.game_end()
-        elif game.game_status == SCENE_CALIBRATION:
+        elif game.game_status == skt_cst.SCENE_CALIBRATION:
             game.calibrate_pads()
        
 if __name__ == '__main__':
