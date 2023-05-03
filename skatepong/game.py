@@ -55,7 +55,7 @@ class Game():
     DELAY_BEF_PAD_CALIB = 5 # Delay before paddles calib. starts (s)
     DELAY_AFT_PAD_CALIB = 5 # Delay for testing paddles calib. (s)
     # Technical parameters
-    FPS = 60 # Max number of frames per second
+    FPS = 30 # Max number of frames per second
     GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_1000DEG
     """
     For GYRO_SENSITIVITY, use one of the following constants:
@@ -118,18 +118,23 @@ class Game():
         """
         disp_w = pygame.display.Info().current_w # Disp. width (px)
         disp_h = pygame.display.Info().current_h # Disp. height (px)
-        # Resolution limitation to avoid lags with resolution 1920x1080
         print ("Display resolution :", disp_w, disp_h) 
-        if disp_w == 1920 and disp_h == 1080:
-            print ("Game resolution reduced vs display resolution", \
-            "for better performances on Raspberry Pi 3 Model B+")
-            disp_w = 1280
-            disp_h = 720
+        # Getting raspberry pi HW version (through cpu revision)
+        cpu_rev = skt_tls.get_cpu_revision()
+        rpi_4b = skt_tls.is_rpi_4b(cpu_rev)
+        if rpi_4b == True:
+            pass
+        # If HW < Model 4B, reso. reduc. to avoid lags on wide screen:
+        else:
+            if disp_w == 1920 and disp_h == 1080:
+                print ("Game resolution reduced vs display resolution", \
+                "for better performances on Raspberry Pi 3 Model B+")
+                disp_w = 1280
+                disp_h = 720
         if self.full_screen == False:
             win = pygame.display.set_mode([disp_w, disp_h - 100])
             pygame.display.set_caption("Skatepong")         
         else:
-            #win = pygame.display.set_mode([0, 0], pygame.FULLSCREEN)
             win = pygame.display.set_mode([disp_w, disp_h], pygame.FULLSCREEN)
         time.sleep(1/2)
         win_w , win_h = pygame.display.get_surface().get_size()
