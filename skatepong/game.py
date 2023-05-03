@@ -600,7 +600,7 @@ class Game():
         txt_fr_1 = "EN ATTENTE DU JOUEUR GAUCHE"
         txt_en_1 = "WAITING FOR LEFT PLAYER"
         txt_fr_2 = "EN ATTENTE DU JOUEUR DROIT"
-        txt_en_2 = "WAITING FOR RIGHT PLAYERS"
+        txt_en_2 = "WAITING FOR RIGHT PLAYER"
         txt_fr_3 = "EN ATTENTE DES JOUEURS"
         txt_en_3 = "WAITING FOR PLAYERS"
 
