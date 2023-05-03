@@ -1006,8 +1006,14 @@ class Game():
         pygame.display.update()
                                
         # Gyroscope offset measurement:
-        self.l_gyro.offset = self.l_gyro.measure_gyro_offset()
-        self.r_gyro.offset = self.r_gyro.measure_gyro_offset()    
+        try:
+            self.l_gyro.offset = self.l_gyro.measure_gyro_offset()
+        except IOError:
+            self.l_gyro.error = True
+        try:
+            self.r_gyro.offset = self.r_gyro.measure_gyro_offset()
+        except IOError:
+            self.r_gyro.error = True
 
         # Erasing from display objects previous positions:  
         l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
