@@ -8,6 +8,7 @@ import pygame
 import time
 import math
 import random
+import os
 import sys
 from mpu6050 import mpu6050
 import skatepong.gyro as skt_gyro
@@ -256,16 +257,34 @@ class Game():
     def check_user_inputs(self, keys):
         """
         Check user inputs (keyboards / mouse). 
+        Logic implemented with Ness controller
+        ---------------------------------------------------------------
+        Ness controller - Keyboard       - Explanation
+        Button A        - Keyboard C     - Close / Calibrate
+        Button B        - Keyboard B     - Simple mapping
+        Button Start    - Keyboard R     - Restart game / Reboot
+        Button Select   - Keyboard Space - No particular meaning
+        ---------------------------------------------------------------
         """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-        if keys[pygame.K_ESCAPE]:
+        if keys[pygame.K_SPACE] \
+        and keys[pygame.K_b] \
+        and keys[pygame.K_r]:
+            os.system("sudo reboot") # Raspberry reboot immediately
+        elif keys[pygame.K_SPACE] \
+        and keys[pygame.K_b] \
+        and keys[pygame.K_c]:
+            os.system("shutdown now") # Raspberry shuts down immediately
+        elif keys[pygame.K_ESCAPE]:
             sys.exit()
         elif keys[pygame.K_c]:
             self.game_status = self.SCENE_CALIBRATION
-        elif keys[pygame.K_s]:
+            # Will only have effect with a return statement in game code
+        elif keys[pygame.K_r]:
             self.game_status = self.SCENE_WAITING_PLAYERS
+            # Will only have effect with a return statement in game code
 
     def detect_goal(self, goal_to_be):
         """
@@ -488,7 +507,8 @@ class Game():
         
         while current_time - start_time < self.DELAY_WELCOME: 
             self.clock.tick(self.FPS)
-            # Checking requests for closing / calibrating / restarting:
+            # Checking requests for closing game window / rebooting/shutting down RPI:
+            # Note: Restarting game / calibrating requests have no impact 
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
             # Updating current time
@@ -524,7 +544,8 @@ class Game():
             r_gyro_connected = False
             prev_status = status
             
-            # Checking requests for closing / calibrating / restarting:        
+            # Checking requests for closing game window / rebooting/shutting down RPI:
+            # Note: Restarting game / calibrating requests have no impact       
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
 
@@ -622,7 +643,8 @@ class Game():
             self.clock.tick(self.FPS)
             prev_status = status
                         
-            # Checking requests for closing / calibrating / restarting:        
+            # Checking requests for closing game window / rebooting/shutting down RPI:
+            # Note: Restarting game / calibrating requests have no impact    
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
 
@@ -718,9 +740,9 @@ class Game():
             prev_time_before_start = time_before_start
             self.clock.tick(self.FPS)
             
-            # Checking requests for closing / calibrating / restarting:
+            # Checking requests for closing game window / rebooting/shutting down RPI:
+            # Note: Restarting game / calibrating requests have no impact 
             keys = pygame.key.get_pressed()
-            #check_exit_game(keys)
             self.check_user_inputs(keys)
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
@@ -784,7 +806,8 @@ class Game():
         and self.r_score < self.WINNING_SCORE:
 
             self.clock.tick(self.FPS)
-            # Checking requests for closing / calibrating / restarting:
+            # Checking requests for closing game window / rebooting/shutting down RPI
+            # Note: Restarting game / calibrating requests are effective 
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
             
@@ -853,10 +876,10 @@ class Game():
             
             self.clock.tick(self.FPS)
 
-            # Checking requests for closing / calibrating / restarting:
+            # Checking requests for closing game window / rebooting/shutting down RPI:
+            # Note: Restarting game / calibrating requests have no impact 
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
-            #check_exit_game(keys)
 
             # Reinitializing gyro if necessary (after i2c deconnection)
             self.reinitialize_gyro_if_needed()
@@ -924,9 +947,9 @@ class Game():
             self.clock.tick(self.FPS)
             prev_time_before_start = time_before_start
             
-            # Checking requests for closing / calibrating / restarting:
+            # Checking requests for closing game window / rebooting/shutting down RPI:
+            # Note: Restarting game / calibrating requests have no impact 
             keys = pygame.key.get_pressed()
-            #check_exit_game(keys)
             self.check_user_inputs(keys)
 
             # Reinitializing gyro if necessary (after i2c deconnection)
@@ -992,7 +1015,6 @@ class Game():
                                draw_scores = False, draw_line = False)
 
         pygame.display.update()
-        #pygame.display.update([l_pad_rect, r_pad_rect])
                                
         # Gyroscope offset measurement:
         self.l_gyro.offset = self.l_gyro.measure_gyro_offset()
@@ -1041,9 +1063,9 @@ class Game():
             
             self.clock.tick(self.FPS)
 
-            # Checking requests for closing / calibrating / restarting:
+            # Checking requests for closing game window / rebooting/shutting down RPI:
+            # Note: Restarting game / calibrating requests have no impact 
             keys = pygame.key.get_pressed()
-            #check_exit_game(keys)
             self.check_user_inputs(keys)
 
             # Reinitializing gyro if necessary (after i2c deconnection)
