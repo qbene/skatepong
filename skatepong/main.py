@@ -47,6 +47,6 @@ def main():
             game.game_end()
         elif game.game_status == skt_cst.SCENE_CALIBRATION:
             game.calibrate_pads()
-       
+
 if __name__ == '__main__':
     main()

@@ -110,11 +110,16 @@ class Game():
             pass
         # If HW < Model 4B, reso. reduc. to avoid lags on wide screen:
         else:
+            # Most commom resolution for TV: 1920 x 1080
             if disp_w == 1920 and disp_h == 1080:
                 print ("Game resolution reduced vs display resolution", \
                 "for better performances on Raspberry Pi 3 Model B+")
                 disp_w = 1280
                 disp_h = 720
+            # If other wide reso, adjust h to keep A/R with w = 1280
+            elif disp_w > 1280:
+                disp_h = 1280 * disp_h / disp_w
+                disp_w = 1280
         if self.full_screen == False:
             win = pygame.display.set_mode([disp_w, disp_h - 100])
             pygame.display.set_caption("Skatepong")         
