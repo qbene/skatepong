@@ -46,7 +46,7 @@ class Game():
     
     # Main game parameters 
     WINNING_SCORE = 5 # Number of goals to win the game
-    BALL_ANGLE_MAX = 55 # Max angle after paddle collision (deg) [30-75]
+    BALL_ANGLE_MAX = 50 # Max angle after paddle collision (deg) [30-75]
     VELOCITY_ANGLE_FACTOR = 2.5 # Higher ball velocity when angle [2 - 3]
     # Delays
     DELAY_WELCOME = 3 # Splash screen duration (s)
@@ -71,7 +71,7 @@ class Game():
     PAD_HEIGHT_RATIO = 0.2 # Rat. disp. h [0.05 - 0.2]
     PAD_X_OFFSET_RATIO = 0.02 # Rat. disp. w [0.01 - 0.02] frame offset
     BALL_RADIUS_RATIO = 0.02 # Rat. min disp. w/h [0.01 - 0.04]
-    PAD_FLAT_BOUNCE_RATIO = 0.01 # Rat. disp. w [0.005 - 0.02]
+    PAD_FLAT_BOUNCE_RATIO = 0.02 # Rat. disp. w [0.01 - 0.03]
     BALL_V_RATIO = 0.03 # Rat. disp. w [0.01 - 0.035]
     MID_LINE_WIDTH_RATIO = 0.006 # Rat. disp. w [0.005 - 0.01]
     SCORE_Y_OFFSET_RATIO = 0.02 # Rat. disp. h - frame vertical offset
@@ -308,7 +308,7 @@ class Game():
         x_mod = int(self.ball.rect.centerx - ((self.ball.vx * (self.ball.rect.centery - y_mod)) / self.ball.vy))
         self.ball.rect.center = (x_mod, y_mod)
         self.ball.vy *= -1
-        
+
     def handle_l_coll(self, goal_to_be):
         """
         Handles collision between ball and left paddle.
@@ -321,22 +321,18 @@ class Game():
             and y_mod - self.ball.r <= self.l_pad.rect.bottom):            
                 y_pad_mid = self.l_pad.rect.centery
                 # Bounce angle calculation
-                if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w)\
-                and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_w)):
+                if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2) \
+                and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2)):
                     self.ball.vx = self.ball.vx_straight
                     self.ball.vy = 0
                 else:
-                    angle = round((y_mod - y_pad_mid) / (self.l_pad.h / 2) * self.BALL_ANGLE_MAX)
-                    # Constant speed
-                    #vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w)
-                    #vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w)
-                    # Faster when there is an angle to compensate for longer distance
-                    vx = round(math.cos(math.radians(angle)) * self.ball.vx_straight) \
-                         * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))
-                    vy = round(math.sin(math.radians(angle)) * self.ball.vx_straight) \
-                         * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                    
-                    self.ball.vy = vy
-                    self.ball.vx = vx
+                    angle = int((abs(y_mod - y_pad_mid) - (self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2)) / ((self.r_pad.h + self.ball.r - self.PAD_FLAT_BOUNCE_RATIO * self.win_h) / 2) * self.BALL_ANGLE_MAX)
+                    if y_mod > y_pad_mid:
+                        vy = int(self.ball.vx_straight * math.tan(math.radians(angle)))
+                    else:
+                        vy = -int(self.ball.vx_straight * math.tan(math.radians(angle)))
+                    self.ball.vx *= -1
+                    self.ball.vy = vy                    
                 self.ball.rect.center = (x_mod, y_mod)
             else:
                 goal_to_be = True
@@ -354,22 +350,20 @@ class Game():
             and y_mod - self.ball.r <= self.r_pad.rect.bottom:            
                 y_pad_mid = self.r_pad.rect.centery
                 # Bounce angle calculation
-                if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_w) \
-                and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_w)):
+                if (y_mod < (y_pad_mid + self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2) \
+                and y_mod > (y_pad_mid - self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2)):
                     self.ball.vx = -self.ball.vx_straight
                     self.ball.vy = 0
                 else:
-                    angle = round((y_mod - y_pad_mid) / (self.r_pad.h / 2) * self.BALL_ANGLE_MAX)
-                    # Constant speed
-                    #vx = round(math.cos(math.radians(angle)) * BALL_V_RATIO * win_w)
-                    #vy = round(math.sin(math.radians(angle)) * BALL_V_RATIO * win_w)
-                    # Faster when there is an angle to compensate for longer distance
-                    vx = round(math.cos(math.radians(angle)) * self.ball.vx_straight) \
-                         * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))
-                    vy = round(math.sin(math.radians(angle)) * self.ball.vx_straight) \
-                         * (self.VELOCITY_ANGLE_FACTOR - math.cos(math.radians(angle)))                    
+                    angle = int((abs(y_mod - y_pad_mid) - (self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2)) / ((self.r_pad.h + self.ball.r - self.PAD_FLAT_BOUNCE_RATIO * self.win_h) / 2) * self.BALL_ANGLE_MAX)
+                    if y_mod > y_pad_mid:
+                        vy = int(self.ball.vx_straight * math.tan(math.radians(angle)))
+                    else:
+                        vy = -int(self.ball.vx_straight * math.tan(math.radians(angle)))
+                    print (angle)                   
+                    # Keeping vx constant all the time
+                    self.ball.vx *= -1
                     self.ball.vy = vy
-                    self.ball.vx = -vx
                 self.ball.rect.center = (x_mod, y_mod)
             else:
                 goal_to_be = True
