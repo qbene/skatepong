@@ -112,7 +112,7 @@ def comp_common_coordinates(win_w, win_h):
 
 def get_cpu_revision():
     """
-    Returns cpu revision information
+    Returns cpu revision info -> Used to identify Raspberry Pi HW.
     -------------------------------------------------------------------
     3 Model B -> a02082 / a22082 / a32082
     3 Model B+ -> a020d3
@@ -135,7 +135,7 @@ def get_cpu_revision():
 
 def is_rpi_4b(cpu_rev):
     """
-    Returns cpu revision information
+    Returns whether the given cpu revision correpsonds to RPI Model 4.
     -------------------------------------------------------------------
     3 Model B -> a02082 / a22082 / a32082
     3 Model B+ -> a020d3
@@ -159,7 +159,7 @@ def is_rpi_4b(cpu_rev):
 
 def main():
     """
-    Function for test purposes only
+    Function for test purposes only.
     """
     cpu_rev = get_cpu_revision()
     is_rpi_4b(cpu_rev)

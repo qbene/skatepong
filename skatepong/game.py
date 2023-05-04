@@ -45,18 +45,17 @@ class Game():
     #-------------------------------------------------------------------
 
     # Main game parameters
-    WINNING_SCORE = 5 # Number of goals to win the game
-    BALL_ANGLE_MAX = 50 # Max angle after paddle collision (deg) [30-75]
-    VELOCITY_ANGLE_FACTOR = 2.5 # Higher ball velocity when angle [2 - 3]
+    WINNING_SCORE = 10 # Number of goals to win the game
+    BALL_ANGLE_MAX = 50 # Max angle after paddle collision (deg) [35-65]
     # Delays
     DELAY_WELCOME = 3 # Splash screen duration (s)
     DELAY_INACT_PLAYER = 5 # Delay before a player becomes inactive (s)
-    DELAY_COUNTDOWN = 3 # Countdown before game starts (s)
+    DELAY_COUNTDOWN = 5 # Countdown before game starts (s)
     DELAY_GAME_END = 5 # Delay after game ends (s)
     DELAY_BEF_PAD_CALIB = 5 # Delay before paddles calib. starts (s)
     DELAY_AFT_PAD_CALIB = 5 # Delay for testing paddles calib. (s)
     # Technical parameters
-    FPS = 30 # Max number of frames per second
+    FPS = 30 # Max frames/sec (30 seems good compromise for RPI3 / RPI4)
     GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_1000DEG
     """
     For GYRO_SENSITIVITY, use one of the following constants:
@@ -108,24 +107,27 @@ class Game():
         rpi_4b = skt_tls.is_rpi_4b(cpu_rev)
         if rpi_4b == True:
             pass
-        # If HW < Model 4B, reso. reduc. to avoid lags on wide screen:
+        # If RPI HW < Mod 4B, game resolution reduc. to avoid lags
         else:
             # Most commom resolution for TV: 1920 x 1080
             if disp_w == 1920 and disp_h == 1080:
-                print ("Game resolution reduced vs display resolution", \
-                "for better performances on Raspberry Pi 3 Model B+")
+                print ("Game resolution reduced vs display resolution",\
+                "for better performances on RPI 3 Model B+")
                 disp_w = 1280
                 disp_h = 720
             # If other wide reso, adjust h to keep A/R with w = 1280
             elif disp_w > 1280:
+                print ("Game resolution reduced vs display resolution",\
+                "for better performances on RPI 3 Model B+")
                 disp_h = 1280 * disp_h / disp_w
                 disp_w = 1280
         if self.full_screen == False:
             win = pygame.display.set_mode([disp_w, disp_h - 100])
             pygame.display.set_caption("Skatepong")
         else:
-            win = pygame.display.set_mode([disp_w, disp_h], pygame.FULLSCREEN)
-        time.sleep(1/2)
+            win = pygame.display.set_mode([disp_w, disp_h], \
+                                          pygame.FULLSCREEN)
+        time.sleep(1/2) # Introduced after some failure at game init.
         win_w , win_h = pygame.display.get_surface().get_size()
         print ("Game resolution :", win_w, win_h)
         return win, win_w, win_h
@@ -156,8 +158,9 @@ class Game():
                      pad_y, pad_w, pad_h, skt_cst.WHITE, self.l_gyro)
         self.r_pad = skt_obj.Paddle(self.win, self.win_h, r_pad_x, \
                      pad_y, pad_w, pad_h, skt_cst.WHITE, self.r_gyro)
-        self.ball = skt_obj.Ball(self.win, self.x_dic["0.50"], self.y_dic["0.50"], \
-                    ball_r, skt_cst.WHITE, ball_vx_straight, 0, 0)
+        self.ball = skt_obj.Ball(self.win, self.x_dic["0.50"], \
+                                self.y_dic["0.50"], ball_r, \
+                                skt_cst.WHITE, ball_vx_straight, 0, 0)
 
     def reinitialize_gyro_if_needed(self):
         """
@@ -202,10 +205,14 @@ class Game():
         if draw_scores == True:
             txt_l = str(self.l_score)
             txt_r = str(self.r_score)
-            l_score_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_l, \
-                  self.x_dic["0.25"], self.y_dic["0.10"], skt_cst.WHITE)
-            r_score_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_r, \
-                              self.x_dic["0.75"], self.y_dic["0.10"], skt_cst.WHITE)
+            l_score_rect = skt_tls.draw_text(self.win, self.FT_NM, \
+                           self.ft_dic["0.10"], txt_l, \
+                           self.x_dic["0.25"], self.y_dic["0.10"], \
+                           skt_cst.WHITE)
+            r_score_rect = skt_tls.draw_text(self.win, self.FT_NM, \
+                           self.ft_dic["0.10"], txt_r, \
+                           self.x_dic["0.75"], self.y_dic["0.10"], \
+                           skt_cst.WHITE)
         if draw_pads == True:
             l_pad_rect = self.l_pad.draw(skt_cst.WHITE)
             r_pad_rect = self.r_pad.draw(skt_cst.WHITE)
@@ -214,39 +221,43 @@ class Game():
         if draw_line == True:
             thick = int(self.win_w * self.MID_LINE_WIDTH_RATIO)
             horiz_w_factor = self.CENTER_CROSS_MULTIPLIER
-            mid_line_h_rect, mid_line_v_rect = skt_tls.draw_mid_line(self.win, self.win_w, self.win_h, \
-                                  thick, horiz_w_factor, skt_cst.WHITE)
+            mid_line_h_rect, mid_line_v_rect = skt_tls.draw_mid_line(\
+                                               self.win, self.win_w, \
+                                               self.win_h, thick, \
+                                               horiz_w_factor, \
+                                               skt_cst.WHITE)
 
         return l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, \
                ball_rect, mid_line_h_rect, mid_line_v_rect
 
-    def erase_game_objects(self, color, pads = True, ball = True, scores = True):
+    def erase_game_objects(self, color, pads = True, ball = True, \
+                           scores = True):
         """
         Erases display of previous positions for changing game elements
         Note : This includes both pads / ball / scores.
         """
-        l_score_rect = None
-        r_score_rect = None
+        l_sc_rect = None
+        r_sc_rect = None
         l_pad_rect = None
         r_pad_rect = None
         ball_rect = None
         if scores == True:
             txt_l = str(self.l_score)
             txt_r = str(self.r_score)
-            max_w_txt_score = skt_tls.get_max_w_txt(self.FT_NM, \
+            max_w_txt_sc = skt_tls.get_max_w_txt(self.FT_NM, \
                       self.ft_dic["0.10"], "1000")
-            l_score_rect =  pygame.Rect(0, 0, max_w_txt_score, self.ft_dic["0.10"])
-            r_score_rect =  pygame.Rect(0, 0, max_w_txt_score, self.ft_dic["0.10"])
-            l_score_rect.center = (self.x_dic["0.25"], self.y_dic["0.10"])
-            r_score_rect.center = (self.x_dic["0.75"], self.y_dic["0.10"])
-            l_score_rect = pygame.draw.rect(self.win, color, l_score_rect)
-            r_score_rect = pygame.draw.rect(self.win, color, r_score_rect)
+            l_sc_rect =  pygame.Rect(0, 0, max_w_txt_sc, self.ft_dic["0.10"])
+            r_sc_rect =  pygame.Rect(0, 0, max_w_txt_sc, self.ft_dic["0.10"])
+            l_sc_rect.center = (self.x_dic["0.25"], self.y_dic["0.10"])
+            r_sc_rect.center = (self.x_dic["0.75"], self.y_dic["0.10"])
+            l_sc_rect = pygame.draw.rect(self.win, color, l_sc_rect)
+            r_sc_rect = pygame.draw.rect(self.win, color, r_sc_rect)
         if pads == True:
             l_pad_rect = self.l_pad.draw(color)
             r_pad_rect = self.r_pad.draw(color)
         if ball == True:
             ball_rect = self.ball.draw(color)
-        return l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect
+        return l_sc_rect, r_sc_rect, l_pad_rect, r_pad_rect, ball_rect
 
     def check_user_inputs(self, keys):
         """
@@ -275,10 +286,10 @@ class Game():
             sys.exit()
         elif keys[pygame.K_c]:
             self.game_status = skt_cst.SCENE_CALIBRATION
-            # Will only have effect with a return statement in game code
+            # Will only have effect if return statement in game code
         elif keys[pygame.K_r]:
             self.game_status = skt_cst.SCENE_WAITING_PLAYERS
-            # Will only have effect with a return statement in game code
+            # Will only have effect if return statement in game code
 
     def detect_goal(self, goal_to_be):
         """
@@ -310,7 +321,8 @@ class Game():
         # Top wall
         elif (self.ball.rect.top <= 0):
             y_mod = self.ball.r
-        x_mod = int(self.ball.rect.centerx - ((self.ball.vx * (self.ball.rect.centery - y_mod)) / self.ball.vy))
+        x_mod = int(self.ball.rect.centerx - ((self.ball.vx * \
+                (self.ball.rect.centery - y_mod)) / self.ball.vy))
         self.ball.rect.center = (x_mod, y_mod)
         self.ball.vy *= -1
 
@@ -320,7 +332,9 @@ class Game():
         """
         if self.ball.rect.left <= self.l_pad.rect.right:
             x_mod = self.l_pad.rect.right + self.ball.r
-            y_mod = int(self.ball.rect.centery - (self.ball.rect.centerx - x_mod) * self.ball.vy / self.ball.vx)
+            y_mod = int(self.ball.rect.centery \
+                    - (self.ball.rect.centerx - x_mod) \
+                    * self.ball.vy / self.ball.vx)
             # If ball colliding with paddle:
             if (y_mod + self.ball.r >= self.l_pad.rect.top \
             and y_mod - self.ball.r <= self.l_pad.rect.bottom):
@@ -331,11 +345,14 @@ class Game():
                     self.ball.vx = self.ball.vx_straight
                     self.ball.vy = 0
                 else:
-                    angle = int((abs(y_mod - y_pad_mid) - (self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2)) / ((self.r_pad.h + self.ball.r - self.PAD_FLAT_BOUNCE_RATIO * self.win_h) / 2) * self.BALL_ANGLE_MAX)
+                    angle = int((abs(y_mod - y_pad_mid) - (self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2)) \
+                       / ((self.r_pad.h + self.ball.r - self.PAD_FLAT_BOUNCE_RATIO * self.win_h) / 2) * self.BALL_ANGLE_MAX)
                     if y_mod > y_pad_mid:
-                        vy = int(self.ball.vx_straight * math.tan(math.radians(angle)))
+                        vy = int(self.ball.vx_straight \
+                                 * math.tan(math.radians(angle)))
                     else:
-                        vy = -int(self.ball.vx_straight * math.tan(math.radians(angle)))
+                        vy = -int(self.ball.vx_straight \
+                                  * math.tan(math.radians(angle)))
                     self.ball.vx *= -1
                     self.ball.vy = vy
                 self.ball.rect.center = (x_mod, y_mod)
@@ -349,7 +366,9 @@ class Game():
         """
         if self.ball.rect.right >= self.r_pad.rect.left:
             x_mod = self.r_pad.rect.left - self.ball.r
-            y_mod = int(self.ball.rect.centery - (self.ball.rect.centerx - x_mod) * self.ball.vy / self.ball.vx)
+            y_mod = int(self.ball.rect.centery \
+                    - (self.ball.rect.centerx - x_mod) \
+                    * self.ball.vy / self.ball.vx)
             # If ball colliding with paddle:
             if y_mod + self.ball.r >= self.r_pad.rect.top \
             and y_mod - self.ball.r <= self.r_pad.rect.bottom:
@@ -360,12 +379,14 @@ class Game():
                     self.ball.vx = -self.ball.vx_straight
                     self.ball.vy = 0
                 else:
-                    angle = int((abs(y_mod - y_pad_mid) - (self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2)) / ((self.r_pad.h + self.ball.r - self.PAD_FLAT_BOUNCE_RATIO * self.win_h) / 2) * self.BALL_ANGLE_MAX)
+                    angle = int((abs(y_mod - y_pad_mid) - (self.PAD_FLAT_BOUNCE_RATIO * self.win_h / 2)) \
+                    / ((self.r_pad.h + self.ball.r - self.PAD_FLAT_BOUNCE_RATIO * self.win_h) / 2) * self.BALL_ANGLE_MAX)
                     if y_mod > y_pad_mid:
-                        vy = int(self.ball.vx_straight * math.tan(math.radians(angle)))
+                        vy = int(self.ball.vx_straight \
+                        * math.tan(math.radians(angle)))
                     else:
-                        vy = -int(self.ball.vx_straight * math.tan(math.radians(angle)))
-                    print (angle)
+                        vy = -int(self.ball.vx_straight \
+                        * math.tan(math.radians(angle)))
                     # Keeping vx constant all the time
                     self.ball.vx *= -1
                     self.ball.vy = vy
@@ -425,7 +446,7 @@ class Game():
                 else:
                     goal_to_be = self.handle_l_coll(goal_to_be)
                     # If left pad not well positioned, goal will happen,
-                    # but still needs to manage boucing on walls
+                    # but still needs to manage bouncing on walls
                     if goal_to_be:
                         self.handle_walls_coll()
             # Left paddle collision possible and no wall collision
@@ -450,8 +471,8 @@ class Game():
                # Right padlle collision first if paddle well positioned
                 else:
                     goal_to_be = self.handle_r_coll(goal_to_be)
-                    # If right pad not well positioned, goal will happen,
-                    # but still needs to manage boucing on walls
+                    # If right pad not well positioned, goal will happen
+                    # but still needs to manage bouncing on walls
                     if goal_to_be:
                         self.handle_walls_coll()
             # Right paddle collision possible and no wall collision
@@ -483,10 +504,13 @@ class Game():
         try:
             self.win.fill(skt_cst.BLACK)
             r = int(self.WELCOME_RADIUS_RATIO * self.win_h)
-            pygame.draw.circle(self.win, skt_cst.WHITE, (self.x_dic["0.50"], self.y_dic["0.50"]), r)
+            pygame.draw.circle(self.win, skt_cst.WHITE, \
+                            (self.x_dic["0.50"], self.y_dic["0.50"]), r)
             txt = "SKATEPONG"
-            skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt, \
-                              self.x_dic["0.50"], self.y_dic["0.50"], skt_cst.BLACK)
+            skt_tls.draw_text(self.win, self.FT_NM, \
+                              self.ft_dic["0.10"], txt, \
+                              self.x_dic["0.50"], self.y_dic["0.50"], \
+                              skt_cst.BLACK)
             pygame.display.update()
         except:
             print ("Reinitializing display...")
@@ -532,23 +556,26 @@ class Game():
             r_gyro_connected = False
             prev_status = status
 
-            # Checking requests for closing game window / rebooting/shutting down RPI:
-            # Note: Restarting game / calibrating requests have no impact
+            # Checking user requests :
+            # -> closing game window / rebooting / shutting down RPI
+            # Note: Restarting game / calibrating not available here
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
 
             # Left gyro test :
             try:
-                self.l_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_1, \
-                        'y', self.GYRO_SENSITIVITY)
+                self.l_gyro = skt_gyro.Gyro_one_axis( \
+                              skt_gyro.Gyro_one_axis.I2C_ADDRESS_1, \
+                              'y', self.GYRO_SENSITIVITY)
             except IOError:
                 l_gyro_connected = False
             else:
                 l_gyro_connected = True
             # Right gyro test :
             try:
-                self.r_gyro = skt_gyro.Gyro_one_axis(skt_gyro.Gyro_one_axis.I2C_ADDRESS_2, \
-                         'y', self.GYRO_SENSITIVITY)
+                self.r_gyro = skt_gyro.Gyro_one_axis( \
+                              skt_gyro.Gyro_one_axis.I2C_ADDRESS_2, \
+                              'y', self.GYRO_SENSITIVITY)
             except IOError:
                 r_gyro_connected = False
             else:
@@ -587,7 +614,9 @@ class Game():
                     pygame.display.update()
                     loop_nb += 1
                 else:
-                    pygame.display.update([txt_fr_max_rect, txt_en_max_rect, txt_fr_rect, txt_en_rect])
+                    pygame.display.update([txt_fr_max_rect, \
+                                           txt_en_max_rect, \
+                                           txt_fr_rect, txt_en_rect])
 
         self.game_status = skt_cst.SCENE_WAITING_PLAYERS
 
@@ -621,18 +650,21 @@ class Game():
         # Reinitializing display:
         self.win.fill(skt_cst.BLACK)
         # The message below is always displayed until players are ready:
-        txt_fr_0_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], txt_fr_0, \
-                          self.x_dic["0.50"], self.y_dic["0.30"], skt_cst.WHITE)
-        txt_en_0_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], txt_en_0, \
-                          self.x_dic["0.50"], self.y_dic["0.80"], skt_cst.GREY)
+        txt_fr_0_rect = skt_tls.draw_text(self.win, self.FT_NM, \
+                     self.ft_dic["0.05"], txt_fr_0, self.x_dic["0.50"],\
+                     self.y_dic["0.30"], skt_cst.WHITE)
+        txt_en_0_rect = skt_tls.draw_text(self.win, self.FT_NM, \
+                     self.ft_dic["0.05"], txt_en_0, self.x_dic["0.50"],\
+                     self.y_dic["0.80"], skt_cst.GREY)
 
         while not (left_player_ready and right_player_ready):
 
             self.clock.tick(self.FPS)
             prev_status = status
 
-            # Checking requests for closing game window / rebooting/shutting down RPI:
-            # Note: Restarting game / calibrating requests have no impact
+            # Checking user requests :
+            # -> closing game window / rebooting / shutting down RPI
+            # Note: Restarting game / calibrating not available here
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
 
@@ -675,23 +707,34 @@ class Game():
                 if loop_nb == 1:
                     pass
                 else:
-                    pygame.display.update([txt_fr_max_rect, txt_en_max_rect, txt_fr_rect, txt_en_rect])
+                    pygame.display.update([txt_fr_max_rect, \
+                                           txt_en_max_rect, \
+                                           txt_fr_rect, txt_en_rect])
 
             # Erasing from display objects previous positions:
-            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = \
-                    self.erase_game_objects(color = skt_cst.BLACK, pads = True, ball = True, scores = True)
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, \
+            r_pad_rect_old, ball_rect_old = self.erase_game_objects( \
+                                            color = skt_cst.BLACK, \
+                                            pads = True, ball = True, \
+                                            scores = True)
             # Moving objects:
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
             # Adding to display objects new positions:
-            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
-                self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect,\
+            mid_line_h_rect, mid_line_v_rect = self.draw_game_objects(\
+                                               draw_pads = True, \
+                                               draw_ball = True, \
+                                               draw_scores = False, \
+                                               draw_line = False)
             # Updating the necessary parts of the display:
             if loop_nb == 1:
                 pygame.display.update()
                 loop_nb += 1
             else:
-                pygame.display.update([l_pad_rect_old, r_pad_rect_old, ball_rect_old, l_pad_rect, r_pad_rect, ball_rect])
+                pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
+                                       ball_rect_old, l_pad_rect, \
+                                       r_pad_rect, ball_rect])
 
             if abs(vy_l_pad) > 25:
                 left_player_ready = True
@@ -727,8 +770,9 @@ class Game():
             prev_time_before_start = time_before_start
             self.clock.tick(self.FPS)
 
-            # Checking requests for closing game window / rebooting/shutting down RPI:
-            # Note: Restarting game / calibrating requests have no impact
+            # Checking user requests :
+            # -> closing game window / rebooting / shutting down RPI.
+            # Note: Restarting game / calibrating not available here.
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
             # Reinitializing gyro if necessary (after i2c deconnection)
@@ -748,23 +792,34 @@ class Game():
                 if loop_nb == 1:
                     pass
                 else:
-                    pygame.display.update([countdown_rect_erase, countdown_rect])
+                    pygame.display.update([countdown_rect_erase, \
+                                           countdown_rect])
 
             # Erasing from display objects previous positions:
-            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
-                color = skt_cst.BLACK, pads = True, ball = True, scores = False)
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, \
+            r_pad_rect_old, ball_rect_old = self.erase_game_objects( \
+                                            color = skt_cst.BLACK, \
+                                            pads = True, \
+                                            ball = True, \
+                                            scores = False)
             # Moving objects:
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
             # Adding to display objects new positions:
-            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
-                self.draw_game_objects(draw_pads = True, draw_ball = True, draw_scores = False, draw_line = False)
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, \
+            mid_line_h_rect, mid_line_v_rect = self.draw_game_objects( \
+                                               draw_pads = True, \
+                                               draw_ball = True, \
+                                               draw_scores = False, \
+                                               draw_line = False)
             # Updating the necessary parts of the display:
             if loop_nb == 1:
                 pygame.display.update()
                 loop_nb += 1
             else:
-                pygame.display.update([l_pad_rect_old, r_pad_rect_old, ball_rect_old, l_pad_rect, r_pad_rect, ball_rect])
+                pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
+                                       ball_rect_old, l_pad_rect, \
+                                       r_pad_rect, ball_rect])
 
             current_time = time.time()
 
@@ -793,8 +848,9 @@ class Game():
         and self.r_score < self.WINNING_SCORE:
 
             self.clock.tick(self.FPS)
-            # Checking requests for closing game window / rebooting/shutting down RPI
-            # Note: Restarting game / calibrating requests are effective
+            # Checking user requests :
+            # -> closing game window / rebooting / shutting down RPI.
+            # -> Restarting game / calibrating available here.
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
 
@@ -807,8 +863,12 @@ class Game():
             self.reinitialize_gyro_if_needed()
 
             # Erasing from display objects previous positions:
-            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
-                color = skt_cst.BLACK, pads = True, ball = True, scores = True)
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, \
+            r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
+                                            color = skt_cst.BLACK, \
+                                            pads = True, \
+                                            ball = True, \
+                                            scores = True)
             # Moving objects:
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
@@ -816,9 +876,12 @@ class Game():
             goal_to_be = self.handle_collision(goal_to_be)
             goal_to_be = self.detect_goal(goal_to_be)
             # Adding to display objects new positions:
-            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
-            self.draw_game_objects(draw_pads = True, draw_ball = True, \
-                                   draw_scores = True, draw_line = True)
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, \
+            mid_line_h_rect, mid_line_v_rect = self.draw_game_objects( \
+                                               draw_pads = True, \
+                                               draw_ball = True, \
+                                               draw_scores = True, \
+                                               draw_line = True)
             if loop_nb == 1:
                 pygame.display.update()
             else:
@@ -863,8 +926,9 @@ class Game():
 
             self.clock.tick(self.FPS)
 
-            # Checking requests for closing game window / rebooting/shutting down RPI:
-            # Note: Restarting game / calibrating requests have no impact
+            # Checking user requests :
+            # -> closing game window / rebooting / shutting down RPI.
+            # -> Restarting game / calibrating not available here.
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
 
@@ -872,16 +936,23 @@ class Game():
             self.reinitialize_gyro_if_needed()
 
             # Erasing from display objects previous positions:
-            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
-                color = skt_cst.BLACK, pads = True, ball = True, scores = True)
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, \
+            r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
+                                            color = skt_cst.BLACK, \
+                                            pads = True, \
+                                            ball = True, \
+                                            scores = True)
 
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
 
             # Adding to display objects new positions:
-            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
-            self.draw_game_objects(draw_pads = True, draw_ball = True, \
-                                   draw_scores = True, draw_line = False)
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, \
+            mid_line_h_rect, mid_line_v_rect = self.draw_game_objects( \
+                                               draw_pads = True, \
+                                               draw_ball = True, \
+                                               draw_scores = True, \
+                                               draw_line = False)
             if loop_nb == 1:
                 pygame.display.update()
                 loop_nb += 1
@@ -934,8 +1005,9 @@ class Game():
             self.clock.tick(self.FPS)
             prev_time_before_start = time_before_start
 
-            # Checking requests for closing game window / rebooting/shutting down RPI:
-            # Note: Restarting game / calibrating requests have no impact
+            # Checking user requests :
+            # -> closing game window / rebooting / shutting down RPI.
+            # -> Restarting game / calibrating not available here.
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
 
@@ -959,16 +1031,23 @@ class Game():
                     pygame.display.update([countdown_rect_erase, countdown_rect])
 
             # Erasing from display objects previous positions:
-            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
-                color = skt_cst.BLACK, pads = True, ball = False, scores = False)
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, \
+            r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
+                                            color = skt_cst.BLACK, \
+                                            pads = True, \
+                                            ball = False, \
+                                            scores = False)
 
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
 
             # Adding to display objects new positions:
-            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
-            self.draw_game_objects(draw_pads = True, draw_ball = False, \
-                                   draw_scores = False, draw_line = False)
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, \
+            mid_line_h_rect, mid_line_v_rect = self.draw_game_objects(\
+                                               draw_pads = True, \
+                                               draw_ball = False, \
+                                               draw_scores = False, \
+                                               draw_line = False)
             if loop_nb == 1:
                 pygame.display.update()
                 loop_nb += 1
@@ -997,10 +1076,13 @@ class Game():
                           txt_en_3, self.x_dic["0.50"], self.y_dic["0.70"], skt_cst.GREY)
 
         # Adding to display objects new positions:
-        l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
-        self.draw_game_objects(draw_pads = True, draw_ball = False, \
-                               draw_scores = False, draw_line = False)
-
+        l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, \
+        mid_line_h_rect, mid_line_v_rect = self.draw_game_objects( \
+                                           draw_pads = True, \
+                                           draw_ball = False, \
+                                           draw_scores = False, \
+                                           draw_line = False)
+                                           
         pygame.display.update()
 
         # Gyroscope offset measurement:
@@ -1014,8 +1096,12 @@ class Game():
             self.r_gyro.error = True
 
         # Erasing from display objects previous positions:
-        l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
-            color = skt_cst.BLACK, pads = True, ball = False, scores = False)
+        l_score_rect_old, r_score_rect_old, l_pad_rect_old, \
+        r_pad_rect_old, ball_rect_old = self.erase_game_objects( \
+                                        color = skt_cst.BLACK, \
+                                        pads = True, \
+                                        ball = False, \
+                                        scores = False)
 
         # Paddles calibration:
         self.l_pad.move_to_center(self.win_h)
@@ -1056,8 +1142,9 @@ class Game():
 
             self.clock.tick(self.FPS)
 
-            # Checking requests for closing game window / rebooting/shutting down RPI:
-            # Note: Restarting game / calibrating requests have no impact
+            # Checking user requests :
+            # -> closing game window / rebooting / shutting down RPI.
+            # -> Restarting game / calibrating not available here.
             keys = pygame.key.get_pressed()
             self.check_user_inputs(keys)
 
@@ -1081,16 +1168,23 @@ class Game():
                     pygame.display.update([countdown_rect_erase, countdown_rect])
 
             # Erasing from display objects previous positions:
-            l_score_rect_old, r_score_rect_old, l_pad_rect_old, r_pad_rect_old, ball_rect_old = self.erase_game_objects(\
-                color = skt_cst.BLACK, pads = True, ball = False, scores = False)
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, \
+            r_pad_rect_old, ball_rect_old = self.erase_game_objects( \
+                                            color = skt_cst.BLACK, \
+                                            pads = True, \
+                                            ball = False, \
+                                            scores = False)
 
             vy_l_pad = self.l_pad.move(self.win_h)
             vy_r_pad = self.r_pad.move(self.win_h)
 
             # Adding to display objects new positions:
-            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, mid_line_h_rect, mid_line_v_rect = \
-            self.draw_game_objects(draw_pads = True, draw_ball = False, \
-                                   draw_scores = False, draw_line = False)
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, \
+            mid_line_h_rect, mid_line_v_rect = self.draw_game_objects( \
+                                               draw_pads = True, \
+                                               draw_ball = False, \
+                                               draw_scores = False, \
+                                               draw_line = False)
             if loop_nb == 1:
                 pygame.display.update()
                 loop_nb += 1

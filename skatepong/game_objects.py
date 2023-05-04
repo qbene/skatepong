@@ -86,7 +86,7 @@ class Paddle():
         # Computing pad velocity if gyroscope is connected
         else:
             gyro_calib = gyro_raw - self.gyro.offset
-            # vy => Negative signe added to have correct pad \
+            # vy => Negative sign added to have correct pad \
             # displacement based on physical installation on skateboards
             vy = - int(gyro_calib / self.gyro.numerical_sensitivity * \
                      self.win_h * vy_factor)

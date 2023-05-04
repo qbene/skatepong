@@ -64,6 +64,9 @@ class Gyro_one_axis(mpu6050):
         return gyro_offset
 
 def main():
+    """
+    Function for test purposes only
+    """
     gyro_1 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', \
              mpu6050.GYRO_RANGE_1000DEG)
     gyro_2 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', \
