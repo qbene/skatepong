@@ -5,7 +5,6 @@
 #-----------------------------------------------------------------------
 
 import pygame
-#from pygame.locals import *
 
 #-----------------------------------------------------------------------
 # CODE
@@ -33,14 +32,14 @@ class Ball():
         ball_rect = pygame.draw.circle(self.win, color, \
                                        self.rect.center, self.r)
         return ball_rect
-        
+
     def move(self):
         """
         Moves the ball ignoring collisions.
         """
         self.rect.centerx += self.vx
         self.rect.centery += self.vy
-    
+
     def reset(self):
         """
         Reset ball to initial state (position / speed).
@@ -48,15 +47,12 @@ class Ball():
         self.rect.center = (self.original_x, self.original_y)
         self.vx = self.original_vx
         self.vy = self.original_vy
-        
-class Paddle():
 
+class Paddle():
     """
     Defines the paddles properties for skatepong game.
     """
 
-    #VY_PAD_RATIO = 0.02 # Ratio to screen height
-    
     def __init__(self, win, win_h, x, y, w, h, color, gyro):
         self.win = win # Surface to draw
         self.win_h = win_h # Surface height (px)
@@ -71,7 +67,7 @@ class Paddle():
     def draw(self, color):
         """
         Draws the paddle as a rectangle.
-        """        
+        """
         pad_rect = pygame.draw.rect(self.win, color, self.rect)
         return pad_rect
 
@@ -80,7 +76,7 @@ class Paddle():
         Converts gyro angular rot. into pad displacement ignoring walls.
         """
         vy_factor = 0.5 # Factor to adjust paddle velocity [0.45 - 0.65]
-        
+
         # Handling gyroscope i2c deconnection
         try:
             gyro_raw = self.gyro.get_data()
@@ -99,8 +95,8 @@ class Paddle():
     def move(self, win_h):
         """
         Moves the paddle taking into account wall collisions.
-        """        
-        vy_pad = self.compute_pad_velocity()        
+        """
+        vy_pad = self.compute_pad_velocity()
         if self.rect.top + vy_pad < 0:
             self.rect.top = 0
         elif self.rect.bottom + vy_pad > win_h:
@@ -108,7 +104,7 @@ class Paddle():
         else:
             self.rect.move_ip(0,vy_pad)
         return vy_pad
-    
+
     def move_to_center(self, win_h):
         """
         Repositions the paddle in the center of the vertical axis.

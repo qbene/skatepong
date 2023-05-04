@@ -13,7 +13,7 @@ import pygame
 def draw_text(win, font_nm, font_sz, txt, x, y, color, bg_color = None):
     """
     Draws text on a surface, text center serving as position reference.
-    
+
     bg_color = text background color
     """
     font = pygame.font.SysFont(font_nm, font_sz)
@@ -22,7 +22,7 @@ def draw_text(win, font_nm, font_sz, txt, x, y, color, bg_color = None):
     txt_rect.center = (x, y)
     win.blit(txt_surf, txt_rect)
     return txt_rect
-    
+
 def get_max_w_txt(font_nm, font_sz, *txts):
     """
     Returns the maximum width (px) of the texts given as argmuments.
@@ -36,8 +36,7 @@ def get_max_w_txt(font_nm, font_sz, *txts):
         if txt_w > max_w_txt:
             max_w_txt = txt_w
     return max_w_txt
-    
-    
+
 def draw_mid_line(win, win_w, win_h, thick, horiz_w_factor, color):
     """
     Draws vertical and short horizontals line in the mid screen.
@@ -110,14 +109,14 @@ def comp_common_coordinates(win_w, win_h):
              "0.95": int(win_h * 0.95) \
              }
     return x_dic, y_dic
-    
+
 def get_cpu_revision():
     """
     Returns cpu revision information
     -------------------------------------------------------------------
     3 Model B -> a02082 / a22082 / a32082
     3 Model B+ -> a020d3
-    4 Model B (1Go) -> a03111 
+    4 Model B (1Go) -> a03111
     4 Model B (2Go) -> b03111 / b03112 / b03114 / b03115
     4 Model B (4Go) -> c03111 / c03112 / c03114 / c03115
     4 Model B (8Go) -> d03114 / d03115
@@ -133,14 +132,14 @@ def get_cpu_revision():
         cpu_rev = "not found"
     print ("cpu revision:", cpu_rev)
     return (cpu_rev)
-    
+
 def is_rpi_4b(cpu_rev):
     """
     Returns cpu revision information
     -------------------------------------------------------------------
     3 Model B -> a02082 / a22082 / a32082
     3 Model B+ -> a020d3
-    4 Model B (1Go) -> a03111 
+    4 Model B (1Go) -> a03111
     4 Model B (2Go) -> b03111 / b03112 / b03114 / b03115
     4 Model B (4Go) -> c03111 / c03112 / c03114 / c03115
     4 Model B (8Go) -> d03114 / d03115

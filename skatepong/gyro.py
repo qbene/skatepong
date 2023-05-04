@@ -18,7 +18,7 @@ class Gyro_one_axis(mpu6050):
     # i2c addresses for MPU6050 sensors
     I2C_ADDRESS_1 = 0x68 # Default (or A0 connected to GND)
     I2C_ADDRESS_2 = 0x69 # A0 connected to VCC
-    
+
     def __init__(self, address, axis, sensitivity, bus = 1):
         # Calling '__init__' of mother class:
         mpu6050.__init__(self, address, bus = 1)
@@ -62,7 +62,7 @@ class Gyro_one_axis(mpu6050):
               " axis) :", str(round(gyro_offset, 2)))
         self.offset = gyro_offset
         return gyro_offset
-    
+
 def main():
     gyro_1 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', \
              mpu6050.GYRO_RANGE_1000DEG)
@@ -75,7 +75,7 @@ def main():
     print("Gyroscope 2 :")
     print("Sensitivity:", str(gyro_2.numerical_sensitivity), "deg/s")
     gyro_2_offset = gyro_2.measure_gyro_offset()
-    
+
     while True:
         gyro_1_raw = gyro_1.get_data()
         gyro_2_raw = gyro_2.get_data()
