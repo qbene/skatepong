@@ -52,7 +52,7 @@ class Game():
     WINNING_SCORE = 10 # Number of goals to win the game
     BALL_ANGLE_MAX = 50 # Max angle after paddle collision (deg) [35-65]
     # Delays
-    DELAY_WELCOME = 3 # Splash screen duration (s)
+    DELAY_WELCOME = 4 # Splash screen duration (s)
     DELAY_INACT_PLAYER = 5 # Delay before a player becomes inactive (s)
     DELAY_COUNTDOWN = 5 # Countdown before game starts (s)
     DELAY_GAME_END = 5 # Delay after game ends (s)
@@ -75,7 +75,7 @@ class Game():
     PAD_X_OFFSET_RATIO = 0.02 # Rat. disp. w [0.01 - 0.02] frame offset
     BALL_RADIUS_RATIO = 0.02 # Rat. min disp. w/h [0.01 - 0.04]
     PAD_FLAT_BOUNCE_RATIO = 0.02 # Rat. disp. w [0.01 - 0.03]
-    BALL_V_RATIO = 0.03 # Rat. disp. w [0.01 - 0.035]
+    BALL_V_RATIO = 0.035 # Rat. disp. w [0.01 - 0.04]
     MID_LINE_WIDTH_RATIO = 0.006 # Rat. disp. w [0.005 - 0.01]
     SCORE_Y_OFFSET_RATIO = 0.02 # Rat. disp. h - frame vertical offset
     CENTER_CROSS_MULTIPLIER = 3 # Mid line thikness factor [2 - 5]
