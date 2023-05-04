@@ -1,3 +1,5 @@
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+
 CONFIGURATION GUIDE
 
 The methods below present how to configure a Rsapberry Pi for running
@@ -12,7 +14,7 @@ METHOD 1 (preferred) : Using poetry
 
 1 - Activate the i2c communication in your Rspberry Pi and reboot.
 
-2 - Clone the Skatepong git repository.
+2 - Clone the Skatepong git repository and open a terminal from this folder:
 
 3 - Create a Python virutal environment.
 
@@ -29,7 +31,15 @@ poetry install
 sudo apt install python3-smbus i2c-tools
 sudo apt install libsdl2-mixer-2.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0
 sudo apt install libsdl2-dev
-sudo apt install qjoypad
+sudo apt install qjoypad # For game controller
+sudo apt install unclutter # To hide mouse cursor
+
+8 - Copy the file "controller_config/ness_controller_skatepong.lyt" 
+in the folder "/home/<user_name>/.qjoypad3". 
+Note : DO NOT RENAME THE FILE
+
+9 - To start the game, from the git folder :
+./run_skatepong.sh
 
 ------------------------------------------------------------------------
 METHOD 2 : Using PIP
@@ -54,7 +64,15 @@ pip3 install pygame
 sudo apt install python3-smbus i2c-tools
 sudo apt install libsdl2-mixer-2.0-0 libsdl2-image-2.0-0 libsdl2-ttf-2.0-0
 sudo apt install libsdl2-dev
-sudo apt install qjoypad
+sudo apt install qjoypad # For game controller
+sudo apt install unclutter # To hide mouse cursor
+
+7 - Copy the file "controller_config/ness_controller_skatepong.lyt" 
+in the folder "/home/<user_name>/.qjoypad3". 
+Note : DO NOT RENAME THE FILE
+
+8 - To start the game, from the git folder :
+./run_skatepong.sh
 
 ------------------------------------------------------------------------
 IN CASE OF ISSUES
@@ -71,4 +89,4 @@ sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
 sudo apt install libfreetype6-dev libportmidi-dev libjpeg-dev 
 sudo apt install python3-setuptools python3-dev python3-numpy
 
-
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.

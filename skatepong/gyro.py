@@ -1,5 +1,9 @@
 #!usr/bin/python3
 
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""
+
 #-----------------------------------------------------------------------
 # IMPORTS
 #-----------------------------------------------------------------------
@@ -18,44 +22,32 @@ class Gyro_one_axis(mpu6050):
     # i2c addresses for MPU6050 sensors
     I2C_ADDRESS_1 = 0x68 # Default (or A0 connected to GND)
     I2C_ADDRESS_2 = 0x69 # A0 connected to VCC
-    
+
     def __init__(self, address, axis, sensitivity, bus = 1):
+        # Calling '__init__' of mother class:
+        mpu6050.__init__(self, address, bus = 1)
+        mpu6050.set_gyro_range(self, sensitivity)
+        self.numerical_sensitivity = mpu6050.read_gyro_range(self)
+        # Personal class init:
         self.axis = axis # 'x' / 'y' / 'z'
         self.sensitivity = sensitivity # Used for gyroscope init
         """
         For sensitivity, use one of the following constants:
-        mpu6050.GYRO_RANGE_250DEG = 0x00 # +/- 250 deg/s
-        mpu6050.GYRO_RANGE_500DEG = 0x08 # +/- 500 deg/s
-        mpu6050.GYRO_RANGE_1000DEG = 0x10 # +/- 1000 deg/s
-        mpu6050.GYRO_RANGE_2000DEG = 0x18 # +/- 2000 deg/s
+        mpu6050.GYRO_RANGE_250DEG = 0x00 # +/- 125 deg/s
+        mpu6050.GYRO_RANGE_500DEG = 0x08 # +/- 250 deg/s
+        mpu6050.GYRO_RANGE_1000DEG = 0x10 # +/- 500 deg/s
+        mpu6050.GYRO_RANGE_2000DEG = 0x18 # +/- 1000 deg/s
         """
-        self.get_numerical_sensitivity() # Used for paddles velocity
         self.offset = 0
         self.error = False
         self.ready_for_reinit = False
-        
-        # Calling '__init__' of mother class :
-        mpu6050.__init__(self, address, bus = 1)
-    
+
     def get_data(self):
         """
         Returns angular rotation (in deg/s) along the chosen axis.
         """
         gyro_data = self.get_gyro_data()[self.axis]
         return gyro_data
-    
-    def get_numerical_sensitivity(self):
-        """
-        Adds gyroscope sensitivity in deg/seconds (+/-) to the object.
-        """
-        if self.sensitivity == 0x00:
-            self.numerical_sensitivity = 250
-        elif self.sensitivity == 0x08:
-            self.numerical_sensitivity = 500
-        elif self.sensitivity == 0x10:
-            self.numerical_sensitivity = 1000
-        elif self.sensitivity == 0x18:
-            self.numerical_sensitivity = 2000
 
     def measure_gyro_offset(self, nb_calib_pts = 500):
         """
@@ -74,12 +66,15 @@ class Gyro_one_axis(mpu6050):
               " axis) :", str(round(gyro_offset, 2)))
         self.offset = gyro_offset
         return gyro_offset
-    
+
 def main():
+    """
+    Function for test purposes only
+    """
     gyro_1 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_1, 'y', \
-             mpu6050.GYRO_RANGE_500DEG)
+             mpu6050.GYRO_RANGE_1000DEG)
     gyro_2 = Gyro_one_axis(Gyro_one_axis.I2C_ADDRESS_2, 'y', \
-             mpu6050.GYRO_RANGE_500DEG)
+             mpu6050.GYRO_RANGE_1000DEG)
 
     print("Gyroscope 1 :")
     print("Sensitivity:", str(gyro_1.numerical_sensitivity), "deg/s")
@@ -87,7 +82,7 @@ def main():
     print("Gyroscope 2 :")
     print("Sensitivity:", str(gyro_2.numerical_sensitivity), "deg/s")
     gyro_2_offset = gyro_2.measure_gyro_offset()
-    
+
     while True:
         gyro_1_raw = gyro_1.get_data()
         gyro_2_raw = gyro_2.get_data()
@@ -104,3 +99,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""
