@@ -70,48 +70,15 @@ def comp_common_coordinates(win_w, win_h):
     """
     Creates a dictionnary with commonly used window coordinates.
     """
-    x_dic = {
-             "0.05": int(win_w * 0.05), \
-             "0.10": int(win_w * 0.10), \
-             "0.15": int(win_w * 0.15), \
-             "0.20": int(win_w * 0.20), \
-             "0.25": int(win_w * 0.25), \
-             "0.30": int(win_w * 0.30), \
-             "0.35": int(win_w * 0.35), \
-             "0.40": int(win_w * 0.40), \
-             "0.45": int(win_w * 0.45), \
-             "0.50": int(win_w * 0.50), \
-             "0.55": int(win_w * 0.55), \
-             "0.60": int(win_w * 0.60), \
-             "0.65": int(win_w * 0.65), \
-             "0.70": int(win_w * 0.70), \
-             "0.75": int(win_w * 0.75), \
-             "0.80": int(win_w * 0.80), \
-             "0.85": int(win_w * 0.85), \
-             "0.90": int(win_w * 0.90), \
-             "0.95": int(win_w * 0.95) \
-             }
-    y_dic = {
-             "0.05": int(win_h * 0.05), \
-             "0.10": int(win_h * 0.10), \
-             "0.15": int(win_h * 0.15), \
-             "0.20": int(win_h * 0.20), \
-             "0.25": int(win_h * 0.25), \
-             "0.30": int(win_h * 0.30), \
-             "0.35": int(win_h * 0.35), \
-             "0.40": int(win_h * 0.40), \
-             "0.45": int(win_h * 0.45), \
-             "0.50": int(win_h * 0.50), \
-             "0.55": int(win_h * 0.55), \
-             "0.60": int(win_h * 0.60), \
-             "0.65": int(win_h * 0.65), \
-             "0.70": int(win_h * 0.70), \
-             "0.75": int(win_h * 0.75), \
-             "0.80": int(win_h * 0.80), \
-             "0.85": int(win_h * 0.85), \
-             "0.90": int(win_h * 0.90), \
-             "0.95": int(win_h * 0.95) \
-             }
+    x_dic = {}
+    y_dic = {}
+    ratio_list = ["0.05", "0.10", "0.15", "0.20", "0.25", "0.30", \
+                  "0.35", "0.40", "0.45", "0.50", "0.55", "0.60", \
+                  "0.65", "0.70", "0.75", "0.80", "0.85", "0.90", \
+                  "0.95"]
+    for ratio in ratio_list:
+        x_dic.update({ratio : int(float(ratio) * win_w)})
+        y_dic.update({ratio : int(float(ratio) * win_h)})
     return x_dic, y_dic
 
 def get_cpu_revision():
@@ -168,6 +135,9 @@ def main():
     cpu_rev = get_cpu_revision()
     is_rpi_4b(cpu_rev)
     is_rpi_4b("a020d3")
+    x_dic, y_dic = comp_common_coordinates(1920, 1080)
+    print (x_dic)
+    print (y_dic)
 
 if __name__ == '__main__':
     main()
