@@ -1,5 +1,9 @@
 #!usr/bin/python3
 
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""
+
 #-----------------------------------------------------------------------
 # IMPORTS
 #-----------------------------------------------------------------------
@@ -1198,3 +1202,7 @@ class Game():
 
 if __name__ == '__main__':
     pass
+
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""

@@ -1,5 +1,9 @@
 #!usr/bin/python3
 
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""
+
 #-----------------------------------------------------------------------
 # IMPORTS
 #-----------------------------------------------------------------------
@@ -95,3 +99,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""

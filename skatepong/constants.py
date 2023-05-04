@@ -1,5 +1,9 @@
 #!usr/bin/python3
 
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""
+
 #-------------------------------------------------------------------
 # CONSTANTS
 #-------------------------------------------------------------------
@@ -16,3 +20,7 @@ SCENE_CALIBRATION = 6
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREY = (127, 127, 127)
+
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""

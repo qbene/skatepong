@@ -1,5 +1,9 @@
 #!usr/bin/python3
 
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""
+
 #-----------------------------------------------------------------------
 # IMPORTS
 #-----------------------------------------------------------------------
@@ -110,3 +114,7 @@ class Paddle():
         Repositions the paddle in the center of the vertical axis.
         """
         self.rect.centery = win_h // 2
+
+"""
+Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
+"""
