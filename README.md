@@ -1,15 +1,32 @@
 Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
 
+------------------------------------------------------------------------
 CONFIGURATION GUIDE
+------------------------------------------------------------------------
 
 The methods below present how to configure a Rsapberry Pi for running
 the Skatepong game.
 
-Notes : This game has been developed using a Raspberry 3 Model B+, and
-2 roscopes MPU6050. No other hardware configuration has been tested.
+Notes : This game has been tested with Raspberry Pi 3 Model B+, and
+Raspberry Pi Model 4. Performances are better with Raspberry Pi Model 4
+which can handle displaying the game at high resolution without 
+requiring a resolution reduction in pygame as the Raspberry Pi 3  
+Model B+ needs.
 
 ------------------------------------------------------------------------
-METHOD 1 (preferred) : Using poetry
+METHOD 1 : Script installation
+------------------------------------------------------------------------
+
+Run the scripts found in this repository in the following order :
+./install_skatepong_system.sh
+./install_skatepong_project.sh
+=> This clones the git repository in : "/home/<user>/opt/"
+The game automatically starts at boot, otherwise it is also possible to 
+start it by running the following command from the git folder :
+./run_skatepong_sh
+
+------------------------------------------------------------------------
+METHOD 2 : Manual installation using poetry
 ------------------------------------------------------------------------
 
 1 - Activate the i2c communication in your Rspberry Pi and reboot.
@@ -42,7 +59,7 @@ Note : DO NOT RENAME THE FILE
 ./run_skatepong.sh
 
 ------------------------------------------------------------------------
-METHOD 2 : Using PIP
+METHOD 3 : Manual installation using PIP
 ------------------------------------------------------------------------
 
 1 - Activate the i2c communication in your Rspberry Pi and reboot.

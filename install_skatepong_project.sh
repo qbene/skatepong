@@ -17,7 +17,7 @@ install_project()
     cd "$HOME/opt/$dest";
     poetry config --local virtualenvs.in-project true;
     poetry install;
-    #cp "/opt/$dest/$controller" "/home/qbe/.qjoypad3"
+    cp "/opt/$dest/$controller" "$HOME/.qjoypad3"
   )
 }
 
