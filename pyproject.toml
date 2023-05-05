@@ -2,7 +2,7 @@
 name = "skatepong"
 version = "0.1.0"
 description = "skatepong game with paddles controlled via gyroscopes mounted under real skateboards"
-authors = ["Quentin BENETHUILLERE, quentin.benethuillere@gmail.com"]
+authors = ["Quentin BENETHUILLERE <quentin.benethuillere@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
