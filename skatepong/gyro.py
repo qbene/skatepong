@@ -49,7 +49,7 @@ class Gyro_one_axis(mpu6050):
         gyro_data = self.get_gyro_data()[self.axis]
         return gyro_data
 
-    def measure_gyro_offset(self, nb_calib_pts = 500):
+    def measure_gyro_offset(self, nb_calib_pts = 350):
         """
         Calculates the average gyro offset along the chosen axis.
         """
