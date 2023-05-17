@@ -41,7 +41,8 @@ class Game():
         COUNTDOWN : Countdown before the actual game starts.
         GAME_ONGOING : Game running.
         GAME_END : Game has ended, the winner is announced.
-        CALIBRATION : Allows paddles calibratation upon request.
+        AUTO_CALIBRATION : Pads calib. once steady skates bef. new game.
+        CALIBRATION_REQUESTED : Paddles calibratation upon request.
     """
 
     #-------------------------------------------------------------------
@@ -49,15 +50,14 @@ class Game():
     #-------------------------------------------------------------------
 
     # Main game parameters
-    WINNING_SCORE = 10 # Number of goals to win the game
+    WINNING_SCORE = 2#10 # Number of goals to win the game
     BALL_ANGLE_MAX = 50 # Max angle after paddle collision (deg) [35-65]
     # Delays
     DELAY_WELCOME = 4 # Splash screen duration (s)
     DELAY_INACT_PLAYER = 5 # Delay before a player becomes inactive (s)
     DELAY_COUNTDOWN = 5 # Countdown before game starts (s)
     DELAY_GAME_END = 5 # Delay after game ends (s)
-    DELAY_BEF_PAD_CALIB = 5 # Delay before paddles calib. starts (s)
-    DELAY_AFT_PAD_CALIB = 5 # Delay for testing paddles calib. (s)
+    DELAY_CALIB = 3 # Duration steady skates needed before calib (s)
     # Technical parameters
     FPS = 30 # Max frames/sec (30 seems good compromise for RPI3 / RPI4)
     GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_1000DEG
@@ -290,7 +290,7 @@ class Game():
             sys.exit()
         elif keys[pygame.K_c]:
             pygame.event.clear()
-            self.game_status = skt_cst.SCENE_CALIBRATION
+            self.game_status = skt_cst.SCENE_CALIBRATION_REQUESTED
             # Will only have effect if return statement in game code
         elif keys[pygame.K_r]:
             self.game_status = skt_cst.SCENE_WAITING_PLAYERS
@@ -547,9 +547,9 @@ class Game():
         txt_fr_3 = "VEUILLEZ CONNECTER LES PLANCHES"
         txt_en_3 = "PLEASE CONNECT SKATEBOARDS"
         max_w_txt_fr = skt_tls.get_max_w_txt(self.FT_NM, \
-                      self.ft_dic["0.10"], txt_fr_1, txt_fr_2, txt_fr_3)
+                      self.ft_dic["0.05"], txt_fr_1, txt_fr_2, txt_fr_3)
         max_w_txt_en = skt_tls.get_max_w_txt(self.FT_NM, \
-                      self.ft_dic["0.10"], txt_en_1, txt_en_2, txt_en_3)
+                      self.ft_dic["0.05"], txt_en_1, txt_en_2, txt_en_3)
         # Reinitializing display:
         self.win.fill(skt_cst.BLACK)
 
@@ -678,7 +678,7 @@ class Game():
             self.reinitialize_gyro_if_needed()
 
             # Going to paddles calibration scene upon user request:
-            if self.game_status == skt_cst.SCENE_CALIBRATION:
+            if self.game_status == skt_cst.SCENE_CALIBRATION_REQUESTED:
                 return
 
             if not (left_player_ready and right_player_ready):
@@ -861,7 +861,7 @@ class Game():
             self.check_user_inputs(keys)
 
             # Going to paddles calibration scene upon user request:
-            if self.game_status == skt_cst.SCENE_CALIBRATION \
+            if self.game_status == skt_cst.SCENE_CALIBRATION_REQUESTED \
             or self.game_status == skt_cst.SCENE_WAITING_PLAYERS:
                 return
 
@@ -921,12 +921,19 @@ class Game():
         else:
             txt_fr = "VICTOIRE DU JOUEUR DROIT"
             txt_en = "RIGHT PLAYER WON"
+        
+        txt_fr_2 = "VEUILLEZ DESCENDRE DES PLANCHES POUR CALIBRATION"
+        txt_en_2 = "PLEASE GET DOWN FROM SKATEBOARDS FOR CALIBRATION"
 
-        # Displaying winner:
+        # Displaying winner and to get down from skates for calibration:
         txt_fr_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_fr, \
-                              self.x_dic["0.50"], self.y_dic["0.30"], skt_cst.WHITE)
+                              self.x_dic["0.50"], self.y_dic["0.25"], skt_cst.WHITE)
         txt_en_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.10"], txt_en, \
-                              self.x_dic["0.50"], self.y_dic["0.70"], skt_cst.GREY)
+                              self.x_dic["0.50"], self.y_dic["0.65"], skt_cst.GREY)
+        txt_fr_2_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
+                          txt_fr_2, self.x_dic["0.50"], self.y_dic["0.35"], skt_cst.WHITE)
+        txt_en_2_rect = skt_tls.draw_text(self.win, self.FT_NM, self.ft_dic["0.05"], \
+                          txt_en_2, self.x_dic["0.50"], self.y_dic["0.75"], skt_cst.GREY)
 
         while current_time - start_time < self.DELAY_GAME_END:
 
@@ -968,6 +975,96 @@ class Game():
                         r_score_rect_old, l_pad_rect, r_pad_rect, \
                         ball_rect, l_score_rect, r_score_rect])
             current_time = time.time()
+
+        self.game_status = skt_cst.SCENE_AUTO_CALIBRATION
+
+    def auto_calibration(self):
+        """
+        Waiting for steady skates for auto calibration before new game.
+        Note : paddles active.
+        """
+        moving_time = time.time()
+        current_time = time.time()
+        status = 0
+        l_skate_steady = False
+        r_skate_steady = False
+        loop_nb = 1
+
+        txt_fr_1 = "VEUILLEZ DESCENDRE DES PLANCHES"
+        txt_en_1 = "PLEASE GET DOWN FROM SKATEBOARDS"
+        txt_fr_2 = "CALIBRATION A VENIR"
+        txt_en_2 = "CALIBRATION PENDING"
+
+        # Reinitializing display:
+        self.win.fill(skt_cst.BLACK)
+        # The message below is always displayed until calibration done:
+        txt_fr_1_rect = skt_tls.draw_text(self.win, self.FT_NM, \
+                     self.ft_dic["0.10"], txt_fr_1, self.x_dic["0.50"],\
+                     self.y_dic["0.20"], skt_cst.WHITE)
+        txt_en_1_rect = skt_tls.draw_text(self.win, self.FT_NM, \
+                     self.ft_dic["0.10"], txt_en_1, self.x_dic["0.50"],\
+                     self.y_dic["0.70"], skt_cst.GREY)
+        txt_fr_2_rect = skt_tls.draw_text(self.win, self.FT_NM, \
+                     self.ft_dic["0.05"], txt_fr_2, self.x_dic["0.50"],\
+                     self.y_dic["0.30"], skt_cst.WHITE)
+        txt_en_2_rect = skt_tls.draw_text(self.win, self.FT_NM, \
+                     self.ft_dic["0.05"], txt_en_2, self.x_dic["0.50"],\
+                     self.y_dic["0.80"], skt_cst.GREY)
+
+        while not (l_skate_steady and r_skate_steady):
+
+            self.clock.tick(self.FPS)
+            prev_status = status
+
+            # Checking user requests :
+            # -> closing game window / rebooting / shutting down RPI
+            # Note: Restarting game / calibrating not available here
+            keys = pygame.key.get_pressed()
+            self.check_user_inputs(keys)
+
+            # Reinitializing gyro if necessary (after i2c deconnection)
+            self.reinitialize_gyro_if_needed()
+            
+            # Erasing from display objects previous positions:
+            l_score_rect_old, r_score_rect_old, l_pad_rect_old, \
+            r_pad_rect_old, ball_rect_old = self.erase_game_objects( \
+                                            color = skt_cst.BLACK, \
+                                            pads = True, ball = True, \
+                                            scores = False)
+            # Moving objects:
+            vy_l_pad = self.l_pad.move(self.win_h)
+            vy_r_pad = self.r_pad.move(self.win_h)
+            # Adding to display objects new positions:
+            l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect,\
+            mid_line_h_rect, mid_line_v_rect = self.draw_game_objects(\
+                                               draw_pads = True, \
+                                               draw_ball = True, \
+                                               draw_scores = False, \
+                                               draw_line = False)
+            # Updating the necessary parts of the display:
+            if loop_nb == 1:
+                pygame.display.update()
+                loop_nb += 1
+            else:
+                pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
+                                       ball_rect_old, l_pad_rect, \
+                                       r_pad_rect, ball_rect])
+
+            if abs(vy_l_pad) > 25:
+                l_skate_steady = False
+                moving_time = time.time()
+            if abs(vy_r_pad) > 25:
+                right_player_ready = False
+                moving_time = time.time()
+
+            current_time = time.time()
+
+            if current_time - moving_time > self.DELAY_CALIB:
+                l_skate_steady = True
+                r_skate_steady = True
+                 # Paddles calibration:
+                self.l_pad.move_to_center(self.win_h)
+                self.r_pad.move_to_center(self.win_h)               
 
         self.game_status = skt_cst.SCENE_WAITING_PLAYERS
 

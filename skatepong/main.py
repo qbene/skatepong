@@ -31,7 +31,8 @@ def main():
         COUNTDOWN : Countdown before the actual game starts.
         GAME_ONGOING : Game running.
         GAME_END : Game has ended, the winner is announced.
-        CALIBRATION : Allows paddles calibratation upon request.
+        AUTO_CALIBRATION : Pads calib. once steady skates bef. new game.
+        CALIBRATION_REQUESTED : Paddles calibratation upon request.
     """
 
     game = skatepong.game.Game(full_screen = True)
@@ -49,7 +50,9 @@ def main():
             game.game_ongoing()
         elif game.game_status == skt_cst.SCENE_GAME_END:
             game.game_end()
-        elif game.game_status == skt_cst.SCENE_CALIBRATION:
+        elif game.game_status == skt_cst.SCENE_AUTO_CALIBRATION:
+            game.auto_calibration()
+        elif game.game_status == skt_cst.SCENE_CALIBRATION_REQUESTED:
             game.calibrate_pads()
 
 if __name__ == '__main__':
