@@ -1,17 +1,52 @@
 Copyright © 2023 Quentin BENETHUILLERE. All rights reserved.
 
 ------------------------------------------------------------------------
-CONFIGURATION GUIDE
+INTRODUCTION
 ------------------------------------------------------------------------
 
-The methods below present how to configure a Rsapberry Pi for running
-the Skatepong game.
+SKATEPONG is 2 players pong game, with real skateboards as actuators.
+A gyroscope is mounted under each skateboard itself mounted on a pivot.
 
+- Objective : Shoot the ball beyond the oponent's zone (+1 point).
+- End : Game ends when a player reaches 10 points.
+- The two paddles are controlled independently based on the angular
+  rotation measured by the gyroscopes mounted under each skateboard.
+  
+- Games scenes :
+	WELCOME : Splash screen at application start.
+	WAITING_GYROS : Waiting that both gyroscopes are connected.
+	WAITING_PLAYERS : Waiting for motion on both skates.
+	COUNTDOWN : Countdown before the actual game starts.
+	GAME_ONGOING : Game running.
+	GAME_END : Winner is announced + pads calib before next game
+	CALIBRATION_REQUESTED : Paddles calibratation upon request.
+	
+- NES controller / keyboard controls are presented in a dedicated doc.
+- Electrical wiring is presented in a dedicated doc.
+	
+------------------------------------------------------------------------
+MATERIAL
+------------------------------------------------------------------------
+
+- 1 x Raspberry Pi >= Model 3B 
 Notes : This game has been tested with Raspberry Pi 3 Model B+, and
 Raspberry Pi Model 4. Performances are better with Raspberry Pi Model 4
 which can handle displaying the game at high resolution without 
 requiring a resolution reduction in pygame as the Raspberry Pi 3  
 Model B+ needs.
+
+- 1 x SD card >= 8Go
+- 2 x gyroscopes MPU-6050
+- 1 x NES controller
+- 1 x display + cable to connect RPI and display (ex: HDMI cable).
+- Wiring to connect RPi and gyroscopes
+
+------------------------------------------------------------------------
+CONFIGURATION GUIDE
+------------------------------------------------------------------------
+
+The methods below present how to configure a Rsapberry Pi for running
+the Skatepong game.
 
 ------------------------------------------------------------------------
 METHOD 1 : Script installation
