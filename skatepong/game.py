@@ -56,9 +56,9 @@ class Game():
     DELAY_INACT_PLAYER = 5 # Delay before a player becomes inactive (s)
     DELAY_COUNTDOWN = 5 # Countdown before game starts (s)
     DELAY_MAX_GAME_END = 15 # Delay max after game ends before calib (s)
-    DELAY_STEADY_BEF_CALIB = 4 # Duration steady skates before calib (s)
+    DELAY_STEADY_BEF_CALIB = 3 # Duration steady skates before calib (s)
     # Technical parameters
-    FPS = 30 # Max frames/sec (30 seems good compromise for RPI3 / RPI4)
+    FPS = 25 # Max frames/sec (30 seems good compromise for RPI3 / RPI4)
     GYRO_SENSITIVITY = mpu6050.GYRO_RANGE_1000DEG
     """
     For GYRO_SENSITIVITY, use one of the following constants:
@@ -78,10 +78,14 @@ class Game():
     MID_LINE_WIDTH_RATIO = 0.006 # Rat. disp. w [0.005 - 0.01]
     SCORE_Y_OFFSET_RATIO = 0.02 # Rat. disp. h - frame vertical offset
     CENTER_CROSS_MULTIPLIER = 3 # Mid line thikness factor [2 - 5]
-    GYRO_ACTIVE_RATIO = 0.07 # Rat. angular velocity / gyro sensitivity
-    GYRO_STEADY_RATIO = 0.02 # Rat. angular velocity / gyro sensitivity
     # Text fonts parameters (names and sizes)
     FT_NM = "comicsans" # or 'quicksandmedium'. Font used for texts.
+    # Other parameters
+    GYRO_ACTIVE_RATIO = 0.07 # Rat. angular velocity / gyro sensitivity
+    GYRO_STEADY_RATIO = 0.02 # Rat. angular velocity / gyro sensitivity
+    PAD_VY_FACTOR_RPI3 = 0.70 #Factor to adjust paddle displacement
+    PAD_VY_FACTOR_RPI4 = 0.60 #Factor to adjust paddle displacement
+    
 
     def __init__(self, game_status = 0, l_score = 0, r_score = 0, \
     full_screen = True):
@@ -110,10 +114,14 @@ class Game():
         # Getting raspberry pi HW version (through cpu revision)
         cpu_rev = skt_tls.get_cpu_revision()
         rpi_4b = skt_tls.is_rpi_4b(cpu_rev)
+        # Adjusting game resolution and paddle displacement factor
+        # (a little different due to different game speed with RPI3/4)
         if rpi_4b == True:
+            self.pad_vy_factor = self.PAD_VY_FACTOR_RPI4
             pass
         # If RPI HW < Mod 4B, game resolution reduc. to avoid lags
         else:
+            self.pad_vy_factor = self.PAD_VY_FACTOR_RPI3
             # Most commom resolution for TV: 1920 x 1080
             if disp_w == 1920 and disp_h == 1080:
                 print ("Game resolution reduced vs display resolution",\
@@ -160,9 +168,11 @@ class Game():
                   - pad_w
         pad_y = (self.win_h - pad_h) // 2
         self.l_pad = skt_obj.Paddle(self.win, self.win_h, l_pad_x, \
-                     pad_y, pad_w, pad_h, skt_cst.WHITE, self.l_gyro)
+                     pad_y, pad_w, pad_h, skt_cst.WHITE, self.l_gyro, \
+                     self.pad_vy_factor)
         self.r_pad = skt_obj.Paddle(self.win, self.win_h, r_pad_x, \
-                     pad_y, pad_w, pad_h, skt_cst.WHITE, self.r_gyro)
+                     pad_y, pad_w, pad_h, skt_cst.WHITE, self.r_gyro, \
+                     self.pad_vy_factor)
         self.ball = skt_obj.Ball(self.win, self.x_dic["0.50"], \
                                 self.y_dic["0.50"], ball_r, \
                                 skt_cst.WHITE, ball_vx_straight, 0, 0)
@@ -548,9 +558,9 @@ class Game():
         txt_fr_3 = "VEUILLEZ CONNECTER LES PLANCHES"
         txt_en_3 = "PLEASE CONNECT SKATEBOARDS"
         max_w_txt_fr = skt_tls.get_max_w_txt(self.FT_NM, \
-                      self.ft_dic["0.05"], txt_fr_1, txt_fr_2, txt_fr_3)
+                      self.ft_dic["0.10"], txt_fr_1, txt_fr_2, txt_fr_3)
         max_w_txt_en = skt_tls.get_max_w_txt(self.FT_NM, \
-                      self.ft_dic["0.05"], txt_en_1, txt_en_2, txt_en_3)
+                      self.ft_dic["0.10"], txt_en_1, txt_en_2, txt_en_3)
         # Reinitializing display:
         self.win.fill(skt_cst.BLACK)
 

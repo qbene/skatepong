@@ -57,7 +57,7 @@ class Paddle():
     Defines the paddles properties for skatepong game.
     """
 
-    def __init__(self, win, win_h, x, y, w, h, color, gyro):
+    def __init__(self, win, win_h, x, y, w, h, color, gyro, vy_factor):
         self.win = win # Surface to draw
         self.win_h = win_h # Surface height (px)
         self.x = self.original_x = x # Top left - horizontal axis
@@ -67,6 +67,7 @@ class Paddle():
         self.color = color # Paddle color
         self.gyro = gyro # Gyroscope controlling paddle displacement
         self.rect = pygame.Rect(x, y, w, h) # Rect for positionning
+        self.vy_factor = vy_factor
 
     def draw(self, color):
         """
@@ -79,7 +80,6 @@ class Paddle():
         """
         Converts gyro angular rot. into pad displacement ignoring walls.
         """
-        vy_factor = 0.60 # Factor to adjust paddle velocity [0.5 - 0.65]
         gyro_ratio_filter = 0.005 # Skate considered steady under this ratio.
 
         # Handling gyroscope i2c deconnection
@@ -96,7 +96,7 @@ class Paddle():
             if abs(gyro_ratio) > gyro_ratio_filter:
                 # vy => Negative sign added to have correct pad \
                 # displacement based on physical installation on skateboards
-                vy = - int(gyro_ratio * self.win_h * vy_factor)
+                vy = - int(gyro_ratio * self.win_h * self.vy_factor)
             else:
                 vy = 0    
         return vy, gyro_ratio
