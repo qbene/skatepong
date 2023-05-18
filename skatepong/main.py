@@ -50,8 +50,6 @@ def main():
             game.game_ongoing()
         elif game.game_status == skt_cst.SCENE_GAME_END:
             game.game_end()
-        elif game.game_status == skt_cst.SCENE_AUTO_CALIBRATION:
-            game.auto_calibration()
         elif game.game_status == skt_cst.SCENE_CALIBRATION_REQUESTED:
             game.calibrate_pads()
 

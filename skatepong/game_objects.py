@@ -79,7 +79,7 @@ class Paddle():
         """
         Converts gyro angular rot. into pad displacement ignoring walls.
         """
-        vy_factor = 0.55 # Factor to adjust paddle velocity [0.45 - 0.65]
+        vy_factor = 0.60 # Factor to adjust paddle velocity [0.5 - 0.65]
 
         # Handling gyroscope i2c deconnection
         try:
