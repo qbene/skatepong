@@ -40,8 +40,7 @@ class Game():
         WAITING_PLAYERS : Waiting for motion on both skates.
         COUNTDOWN : Countdown before the actual game starts.
         GAME_ONGOING : Game running.
-        GAME_END : Game has ended, the winner is announced.
-        AUTO_CALIBRATION : Pads calib. once steady skates bef. new game.
+        GAME_END : Winner is announced + pads calib before next game
         CALIBRATION_REQUESTED : Paddles calibratation upon request.
     """
 
@@ -79,8 +78,8 @@ class Game():
     MID_LINE_WIDTH_RATIO = 0.006 # Rat. disp. w [0.005 - 0.01]
     SCORE_Y_OFFSET_RATIO = 0.02 # Rat. disp. h - frame vertical offset
     CENTER_CROSS_MULTIPLIER = 3 # Mid line thikness factor [2 - 5]
-    PAD_MOVE_ACTIVE_RATIO = 0.04 # Rat. disp. h [0.01 - 0.07]
-    PAD_MOVE_STEADY_RATIO = 0.02 # Rat. disp. h [0.01 - 0.06]
+    GYRO_ACTIVE_RATIO = 0.07 # Rat. angular velocity / gyro sensitivity
+    GYRO_STEADY_RATIO = 0.02 # Rat. angular velocity / gyro sensitivity
     # Text fonts parameters (names and sizes)
     FT_NM = "comicsans" # or 'quicksandmedium'. Font used for texts.
 
@@ -726,8 +725,8 @@ class Game():
                                             pads = True, ball = True, \
                                             scores = True)
             # Moving objects:
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            vy_l_pad, l_gyro_ratio = self.l_pad.move(self.win_h)
+            vy_r_pad, r_gyro_ratio = self.r_pad.move(self.win_h)
             # Adding to display objects new positions:
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect,\
             mid_line_h_rect, mid_line_v_rect = self.draw_game_objects(\
@@ -743,11 +742,11 @@ class Game():
                 pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
                                        ball_rect_old, l_pad_rect, \
                                        r_pad_rect, ball_rect])
-
-            if abs(vy_l_pad) > (self.PAD_MOVE_ACTIVE_RATIO * self.win_h):
+            
+            if abs(l_gyro_ratio) > self.GYRO_ACTIVE_RATIO:
                 left_player_ready = True
                 moving_time = time.time()
-            if abs(vy_r_pad) > (self.PAD_MOVE_ACTIVE_RATIO * self.win_h):
+            if abs(r_gyro_ratio) > self.GYRO_ACTIVE_RATIO:
                 right_player_ready = True
                 moving_time = time.time()
 
@@ -811,8 +810,8 @@ class Game():
                                             ball = True, \
                                             scores = False)
             # Moving objects:
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            vy_l_pad, l_gyro_ratio = self.l_pad.move(self.win_h)
+            vy_r_pad, r_gyro_ratio = self.r_pad.move(self.win_h)
             # Adding to display objects new positions:
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, \
             mid_line_h_rect, mid_line_v_rect = self.draw_game_objects( \
@@ -878,8 +877,8 @@ class Game():
                                             ball = True, \
                                             scores = True)
             # Moving objects:
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            vy_l_pad, l_gyro_ratio = self.l_pad.move(self.win_h)
+            vy_r_pad, r_gyro_ratio = self.r_pad.move(self.win_h)
             self.ball.move()
             goal_to_be = self.handle_collision(goal_to_be)
             goal_to_be = self.detect_goal(goal_to_be)
@@ -965,8 +964,8 @@ class Game():
                                             ball = False, \
                                             scores = False)
 
-            vy_l_pad = self.l_pad.move(self.win_h)
-            vy_r_pad = self.r_pad.move(self.win_h)
+            vy_l_pad, l_gyro_ratio = self.l_pad.move(self.win_h)
+            vy_r_pad, r_gyro_ratio = self.r_pad.move(self.win_h)
 
             # Adding to display objects new positions:
             l_score_rect, r_score_rect, l_pad_rect, r_pad_rect, ball_rect, \
@@ -981,9 +980,9 @@ class Game():
             else:
                 pygame.display.update([l_pad_rect_old, r_pad_rect_old, \
                         l_pad_rect, r_pad_rect])
-                        
-            if (abs(vy_l_pad) > (self.PAD_MOVE_STEADY_RATIO * self.win_h)
-            or abs(vy_r_pad) > (self.PAD_MOVE_STEADY_RATIO * self.win_h)):
+
+            if (abs(l_gyro_ratio) > self.GYRO_STEADY_RATIO
+            or abs(r_gyro_ratio) > self.GYRO_STEADY_RATIO):
                 moving_time = time.time()
             
             current_time = time.time()

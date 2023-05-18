@@ -80,6 +80,7 @@ class Paddle():
         Converts gyro angular rot. into pad displacement ignoring walls.
         """
         vy_factor = 0.60 # Factor to adjust paddle velocity [0.5 - 0.65]
+        gyro_ratio_filter = 0.005 # Skate considered steady under this ratio.
 
         # Handling gyroscope i2c deconnection
         try:
@@ -87,27 +88,31 @@ class Paddle():
         except IOError:
             self.gyro.error = True
             vy = 0
+            gyro_ratio = 0
         # Computing pad velocity if gyroscope is connected
         else:
             gyro_calib = gyro_raw - self.gyro.offset
-            # vy => Negative sign added to have correct pad \
-            # displacement based on physical installation on skateboards
-            vy = - int(gyro_calib / self.gyro.numerical_sensitivity * \
-                     self.win_h * vy_factor)
-        return vy
+            gyro_ratio = gyro_calib / self.gyro.numerical_sensitivity
+            if abs(gyro_ratio) > gyro_ratio_filter:
+                # vy => Negative sign added to have correct pad \
+                # displacement based on physical installation on skateboards
+                vy = - int(gyro_ratio * self.win_h * vy_factor)
+            else:
+                vy = 0    
+        return vy, gyro_ratio
 
     def move(self, win_h):
         """
         Moves the paddle taking into account wall collisions.
         """
-        vy_pad = self.compute_pad_velocity()
+        vy_pad, gyro_ratio = self.compute_pad_velocity()
         if self.rect.top + vy_pad < 0:
             self.rect.top = 0
         elif self.rect.bottom + vy_pad > win_h:
             self.rect.bottom = win_h
         else:
             self.rect.move_ip(0,vy_pad)
-        return vy_pad
+        return vy_pad, gyro_ratio
 
     def move_to_center(self, win_h):
         """

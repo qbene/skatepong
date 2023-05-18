@@ -30,8 +30,7 @@ def main():
         WAITING_PLAYERS : Waiting for motion on both skates.
         COUNTDOWN : Countdown before the actual game starts.
         GAME_ONGOING : Game running.
-        GAME_END : Game has ended, the winner is announced.
-        AUTO_CALIBRATION : Pads calib. once steady skates bef. new game.
+        GAME_END : Winner is announced + pads calib before next game
         CALIBRATION_REQUESTED : Paddles calibratation upon request.
     """
 
